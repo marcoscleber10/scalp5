@@ -1,0 +1,1931 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Mestre do Scalping Pro</title>
+    <style>
+        :root {
+            --bg: #0d1117;
+            --card: #161b22;
+            --green: #00ff88;
+            --red: #ff3e3e;
+            --text: #8b949e;
+            --accent: #2f81f7;
+            --gold: #ffcc00;
+            --purple: #9d4edd;
+            --orange: #ff9900;
+            --bright-yellow: #ffcc00;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Arial, sans-serif; }
+        body { background-color: var(--bg); color: white; display: flex; justify-content: center; padding: 20px; transition: filter 0.5s, box-shadow 0.5s; }
+        .card { background: var(--card); padding: 24px; border-radius: 24px; width: 100%; max-width: 420px; border: 1px solid #30363d; box-shadow: 0 20px 40px rgba(0,0,0,0.6); transition: all 0.3s; }
+        .card.desktop-mode { max-width: 95%; }
+        .desktop-mode #chart_container { height: 500px !important; }
+        h4 { color: var(--text); font-size: 12px; text-align: center; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px dashed #30363d; }
+        .btn-mode { width: 100%; background: var(--accent); color: white; border: none; padding: 12px; border-radius: 40px; font-weight: bold; cursor: pointer; margin-bottom: 15px; font-size: 12px; text-transform: uppercase; }
+        .time-selector { display: flex; gap: 8px; margin-bottom: 15px; }
+        .time-btn { flex: 1; background: #21262d; border: 1px solid #30363d; color: var(--text); padding: 12px 5px; border-radius: 40px; font-size: 11px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .time-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+        .time-btn.active[data-t="15"] { background: var(--gold); color: #000; border-color: var(--gold); }
+        select { width: 100%; background: #21262d; color: white; border: 1px solid #30363d; padding: 15px; border-radius: 40px; margin-bottom: 20px; font-size: 14px; cursor: pointer; appearance: none; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239aa4b3' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>"); background-repeat: no-repeat; background-position: right 18px center; background-size: 16px; }
+        .price { font-size: 42px; font-weight: 800; color: var(--green); text-align: center; margin-bottom: 15px; font-family: 'Courier New', monospace; text-shadow: 0 0 10px #00ff8840; }
+        .status-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .status-bar { background: #0f141c; padding: 12px 5px; border-radius: 20px; border: 1px solid #2a3340; text-align: center; position: relative; overflow: hidden; }
+        .status-label { font-size: 9px; color: var(--text); text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 4px; }
+        .status-value { font-size: 14px; font-weight: bold; display: block; }
+        .light-glow { position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: currentColor; filter: blur(4px); opacity: 0.5; }
+        .score-container { margin-bottom: 15px; }
+        .score-bar { background: #1e2a38; height: 20px; border-radius: 10px; overflow: hidden; margin: 5px 0; }
+        .score-fill { height: 100%; width: 0%; transition: width 0.3s; }
+        .score-fill.alta { background: linear-gradient(90deg, #00ff88, #00cc66); }
+        .score-fill.media { background: linear-gradient(90deg, #ffcc00, #ffaa00); }
+        .score-fill.baixa { background: linear-gradient(90deg, #ff3e3e, #cc0000); }
+        .score-text { display: flex; justify-content: space-between; font-size: 11px; color: var(--text); }
+        @keyframes flashGreen { 0% { background-color: rgba(0,255,136,0); } 50% { background-color: rgba(0,255,136,0.3); } 100% { background-color: rgba(0,255,136,0); } }
+        @keyframes flashRed { 0% { background-color: rgba(255,62,62,0); } 50% { background-color: rgba(255,62,62,0.3); } 100% { background-color: rgba(255,62,62,0); } }
+        .alerta-compra { animation: flashGreen 0.5s ease-in-out 3; }
+        .alerta-venda { animation: flashRed 0.5s ease-in-out 3; }
+        .badge-alerta { background: var(--gold); color: #000; padding: 8px 12px; border-radius: 40px; font-weight: bold; font-size: 12px; margin-bottom: 15px; display: inline-block; animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { opacity: 0.8; transform: scale(1); } 50% { opacity: 1; transform: scale(1.05); } 100% { opacity: 0.8; transform: scale(1); } }
+        .modo-operacao { background: #1e2a38; padding: 15px; border-radius: 20px; margin: 15px 0; display: flex; align-items: center; justify-content: space-between; border: 1px solid var(--accent); }
+        .switch { position: relative; display: inline-block; width: 50px; height: 24px; }
+        .switch input { display: none; }
+        .slider { position: absolute; cursor: pointer; background-color: #444; border-radius: 24px; top: 0; left: 0; right: 0; bottom: 0; transition: .4s; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; border-radius: 50%; transition: .4s; }
+        input:checked + .slider { background-color: #00ff88; }
+        input:checked + .slider:before { transform: translateX(26px); }
+        #statusModo { color: var(--text); font-size: 12px; font-weight: bold; }
+        .alarme-section { background: #1e2a38; padding: 15px; border-radius: 20px; margin: 15px 0; border: 1px solid var(--gold); }
+        .alarme-title { color: var(--gold); font-weight: bold; margin-bottom: 10px; display: flex; align-items: center; gap: 5px; }
+        .alarme-input-group { display: flex; gap: 8px; margin-bottom: 10px; }
+        .alarme-input { flex: 1; background: #0d151f; border: 1px solid #3d4d62; color: white; padding: 10px; border-radius: 20px; font-size: 14px; }
+        .alarme-btn { background: var(--accent); border: none; color: white; padding: 10px 15px; border-radius: 20px; cursor: pointer; font-weight: bold; }
+        .alarme-lista { margin-top: 10px; font-size: 12px; }
+        .alarme-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; background: #0d151f; border-radius: 10px; margin-bottom: 5px; }
+        .alarme-remover { background: var(--red); border: none; color: white; padding: 3px 8px; border-radius: 10px; cursor: pointer; font-size: 10px; }
+        #chart_container { width: 100%; height: 220px; border-radius: 20px; margin-bottom: 20px; border: 1px solid #30363d; background: #000; transition: height 0.3s; }
+        .inputs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px; }
+        label { font-size: 9px; color: var(--text); text-transform: uppercase; margin-bottom: 4px; display: block; }
+        input { width: 100%; background: #21262d; border: 1px solid #30363d; color: white; padding: 12px; border-radius: 20px; font-size: 14px; }
+        .btn-calc { width: 100%; padding: 16px; background: var(--green); color: #0d1117; border: none; border-radius: 40px; font-weight: 800; cursor: pointer; text-transform: uppercase; font-size: 16px; box-shadow: 0 6px 0 #0b5e3c; transform: translateY(-2px); transition: 0.1s; margin-top: 10px; }
+        .btn-calc:active { transform: translateY(4px); box-shadow: 0 2px 0 #0b5e3c; }
+        .res { margin-top: 20px; padding: 18px; background: #0f151d; border-radius: 24px; display: none; border: 1px solid #2a3440; }
+        .projects-section { margin-top: 30px; border-top: 1px solid #30363d; padding-top: 20px; }
+        .projects-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+        .project-btn { background: #1a222c; color: #c9d1d9; border: 1px solid #30363d; padding: 12px 5px; border-radius: 30px; font-size: 11px; font-weight: 600; text-decoration: none; text-align: center; display: block; cursor: pointer; }
+        .project-btn:hover { background: #26323f; }
+        .ad-container { margin-top: 25px; padding: 15px; background: #161e28; border-radius: 30px; border: 1px solid #ffcc0040; text-align: center; }
+        .btn-ad { display: inline-block; background: #ffcc00; color: #000; text-decoration: none; padding: 12px 32px; border-radius: 40px; font-weight: 800; margin-top: 10px; border: 1px solid #ffcc66; box-shadow: 0 4px 0 #8f651f; transform: translateY(-2px); transition: 0.1s; }
+        .btn-ad:active { transform: translateY(2px); box-shadow: 0 1px 0 #8f651f; }
+        .market-table { width: 100%; font-size: 11px; margin-top: 20px; border-collapse: collapse; color: #b6c2d2; }
+        .market-table td { padding: 8px 4px; border-bottom: 1px solid #222b35; }
+        .market-header { color: var(--accent); font-weight: 700; font-size: 10px; letter-spacing: 1.5px; padding-top: 15px; }
+        .floating-ball { position: fixed; bottom: 30px; right: 30px; width: 70px; height: 70px; background: radial-gradient(circle at 30% 30%, var(--green), #0f8f5c); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #0b0f14; font-weight: 900; font-size: 28px; box-shadow: 0 10px 25px #00ff8880; cursor: pointer; z-index: 9999; border: 2px solid white; }
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); display: none; align-items: center; justify-content: center; z-index: 999999; }
+        .modal-content { background: #161b22; padding: 30px; border-radius: 30px; width: 90%; max-width: 700px; max-height: 85vh; overflow-y: auto; border: 2px solid var(--gold); position: relative; z-index: 1000000; box-shadow: 0 20px 40px rgba(0,0,0,0.6); }
+        .submodal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 10000000; }
+        .submodal-content { background: #1e2a36; padding: 25px; border-radius: 25px; width: 90%; max-width: 650px; max-height: 80vh; overflow-y: auto; border: 2px solid var(--accent); position: relative; box-shadow: 0 20px 30px rgba(0,0,0,0.5); }
+        .submodal-content h2 { color: var(--gold); margin-bottom: 15px; }
+        .submodal-content h3 { color: var(--gold); margin: 15px 0 8px; }
+        .button-group { display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end; }
+        .button-group button { background: var(--accent); border: none; color: white; padding: 8px 20px; border-radius: 30px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .button-group button:hover { background: var(--green); color: #000; }
+        .campo { margin-bottom: 15px; }
+        .campo label { color: var(--text); font-size: 11px; text-transform: uppercase; margin-bottom: 5px; display: block; }
+        .donation-item { background: #1e2a36; padding: 15px; border-radius: 15px; margin: 10px 0; border-left: 5px solid; }
+        .donation-item p { word-break: break-all; background: #0d151f; padding: 10px; border-radius: 10px; margin-top: 8px; font-family: monospace; display: flex; justify-content: space-between; align-items: center; }
+        .copy-btn { background: var(--accent); border: none; color: white; padding: 5px 15px; border-radius: 20px; cursor: pointer; font-size: 11px; font-weight: bold; margin-left: 10px; }
+        .copy-btn:hover { background: var(--green); color: #000; }
+        .console { background: #0d1117; padding: 10px; border-radius: 10px; margin: 10px 0; font-size: 12px; font-family: monospace; height: 50px; overflow-y: auto; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .security-warning { background: #ff3e3e20; border: 1px solid #ff3e3e; color: #ff3e3e; padding: 10px; border-radius: 10px; font-size: 11px; margin-bottom: 15px; text-align: center; }
+        .tabs-container { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid var(--accent); padding-bottom: 10px; flex-wrap: wrap; }
+        .tab-btn { background: #1e2a38; border: 1px solid #3d4d62; color: var(--text); padding: 8px 16px; border-radius: 30px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .tab-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+        .tab-btn.robot { background: var(--bright-yellow); color: #000; border-color: var(--bright-yellow); font-weight: bold; }
+        .tab-btn.robot.active { background: var(--bright-yellow); color: #000; border-color: var(--bright-yellow); box-shadow: 0 0 10px var(--bright-yellow); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .categories-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        .category-card { background: #1e2a38; border-radius: 16px; padding: 15px; border: 1px solid #3d4d62; }
+        .category-title { color: var(--gold); font-weight: bold; margin-bottom: 10px; font-size: 14px; text-transform: uppercase; display: flex; align-items: center; justify-content: space-between; }
+        .category-item { display: flex; justify-content: space-between; font-size: 12px; padding: 5px 0; border-bottom: 1px dashed #2a3440; }
+        .category-item:last-child { border-bottom: none; }
+        .category-item .pair { color: white; }
+        .category-item .apr { color: var(--green); font-weight: bold; }
+        .guide-box { background: #0d1a24; border-left: 4px solid var(--accent); border-radius: 12px; padding: 12px 16px; margin-bottom: 20px; font-size: 12px; color: #b0c4d9; line-height: 1.5; }
+        .guide-box summary { cursor: pointer; color: var(--accent); font-weight: bold; outline: none; }
+        .warning-high-apr { background: rgba(255, 153, 0, 0.15); border: 1px solid var(--orange); color: var(--orange); padding: 8px 12px; border-radius: 20px; font-size: 11px; margin-bottom: 15px; text-align: center; }
+        .table-wrapper { overflow-x: auto; margin-top: 20px; border-radius: 16px; border: 1px solid #2a3440; }
+        .pools-table { width: 100%; border-collapse: collapse; font-size: 12px; color: var(--text); min-width: 1400px; }
+        .pools-table th { text-align: left; padding: 12px 8px; border-bottom: 2px solid var(--accent); color: white; font-weight: 600; background: #1a222c; white-space: nowrap; cursor: pointer; }
+        .pools-table td { padding: 10px 8px; border-bottom: 1px solid #2a3440; white-space: nowrap; }
+        .pools-table tr:hover { background: #1e2a38; }
+        .ratio-bar { background: #0d151f; height: 16px; width: 60px; border-radius: 8px; overflow: hidden; display: inline-block; }
+        .ratio-bar span { display: block; height: 100%; background: var(--green); }
+        .apr-high { color: var(--green); font-weight: bold; }
+        .score-cell { font-weight: bold; text-align: center; }
+        .score-bar-small { width: 60px; height: 16px; background: #1e2a38; border-radius: 8px; overflow: hidden; display: inline-block; margin-right: 5px; }
+        .score-fill-small { height: 100%; background: var(--green); }
+        .positive { color: var(--green); }
+        .negative { color: var(--red); }
+        .pool-modal-content { max-width: 1400px !important; width: 95% !important; }
+        .news-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-top: 15px; }
+        .news-card { background: #1e2a38; border-radius: 16px; padding: 15px; border-left: 4px solid var(--accent); transition: 0.2s; }
+        .news-card:hover { transform: translateY(-2px); border-color: var(--green); }
+        .news-card h4 { color: white; margin-bottom: 8px; font-size: 14px; }
+        .news-card a { color: var(--accent); text-decoration: none; font-size: 12px; word-break: break-all; }
+        .news-section { margin-top: 25px; border-top: 1px solid #30363d; padding-top: 20px; }
+        .news-section h4 { color: var(--gold); margin-bottom: 15px; text-align: left; border-bottom: none; padding-bottom: 0; }
+        .news-block { background: #1e2a38; border-radius: 16px; padding: 15px; }
+        .news-links { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
+        .news-links a { color: var(--accent); text-decoration: none; font-size: 12px; }
+        .strategy-content { color: #c9d1d9; font-size: 14px; line-height: 1.6; }
+        .strategy-content h3 { color: var(--green); margin-top: 25px; margin-bottom: 12px; font-size: 1.2rem; }
+        .strategy-content h4 { color: var(--gold); margin-top: 20px; margin-bottom: 8px; }
+        .code-block { background: #0d151f; border-left: 3px solid var(--accent); padding: 12px; border-radius: 8px; font-family: monospace; font-size: 12px; overflow-x: auto; margin: 12px 0; }
+        .strategy-badge { background: var(--accent); color: white; border-radius: 20px; padding: 2px 8px; font-size: 10px; font-weight: bold; display: inline-block; margin-right: 8px; }
+        .btn-detalhe { background: var(--accent); border: none; color: white; padding: 4px 12px; border-radius: 20px; cursor: pointer; font-size: 11px; margin-left: 10px; transition: 0.2s; }
+        .btn-detalhe:hover { background: var(--green); color: #000; }
+        .robot-content { background: #ffcc00; color: #000; padding: 20px; border-radius: 16px; margin-bottom: 20px; }
+        .mvrv-card { background: linear-gradient(135deg, #1e2a3a, #0f141c); border-radius: 20px; padding: 20px; margin: 15px 0; border: 1px solid var(--accent); }
+        .mvrv-value { font-size: 36px; font-weight: bold; font-family: monospace; }
+        .simulador-input { background: #0d151f; border: 1px solid #3d4d62; color: white; padding: 12px; border-radius: 20px; width: 100%; margin: 10px 0; }
+        .alocacao-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #2a3440; }
+        .alocacao-percent { font-weight: bold; color: var(--green); }
+        .copy-strategy-btn { background: var(--gold); color: #000; border: none; padding: 12px 20px; border-radius: 30px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 15px; font-size: 14px; }
+        .copy-strategy-btn:hover { background: #ffcc66; }
+        .indicator-input { background: #0d151f; border: 1px solid #3d4d62; color: white; padding: 10px; border-radius: 16px; width: 100%; text-align: center; font-size: 14px; }
+        .indicator-card { background: #1e2a38; border-radius: 16px; padding: 12px; margin-bottom: 12px; }
+        .indicator-label { font-size: 12px; color: var(--text); margin-bottom: 5px; }
+        .semaforo { display: inline-block; width: 24px; height: 24px; border-radius: 50%; margin-right: 10px; }
+        .semaforo-verde { background: #00ff88; box-shadow: 0 0 10px #00ff88; }
+        .semaforo-amarelo { background: #ffcc00; box-shadow: 0 0 10px #ffcc00; }
+        .semaforo-vermelho { background: #ff3e3e; box-shadow: 0 0 10px #ff3e3e; }
+        .score-grande { font-size: 48px; font-weight: bold; text-align: center; font-family: monospace; }
+        .search-pair-input { width: 100%; background: #0d151f; border: 1px solid #3d4d62; color: white; padding: 12px 16px; border-radius: 30px; font-size: 13px; margin-bottom: 15px; outline: none; }
+        .search-pair-input:focus { border-color: var(--accent); box-shadow: 0 0 5px var(--accent); }
+        .mode-toggle { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; align-items: center; }
+        .mode-btn { flex: 1; min-width: 100px; background: #21262d; border: 1px solid #30363d; color: var(--text); padding: 8px; border-radius: 30px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .mode-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+        .mode-btn.apr-high { background: var(--orange); color: #000; border-color: var(--orange); }
+        .mode-btn.apr-high.active { background: var(--orange); color: #000; border-color: var(--orange); box-shadow: 0 0 10px var(--orange); }
+        .filter-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 15px; background: #1a222c; padding: 15px; border-radius: 20px; }
+        .filter-item { flex: 1; min-width: 100px; }
+        .filter-item label { font-size: 9px; color: var(--text); text-transform: uppercase; margin-bottom: 2px; display: block; }
+        .filter-item input { width: 100%; background: #0d151f; border: 1px solid #3d4d62; color: white; padding: 8px 10px; border-radius: 20px; font-size: 12px; }
+        .btn-filter { background: var(--accent); border: none; color: white; padding: 8px 20px; border-radius: 30px; cursor: pointer; font-weight: bold; font-size: 12px; height: 36px; }
+        .btn-filter:hover { background: var(--green); color: #000; }
+        .btn-atualizar { background: var(--accent); border: none; color: white; padding: 8px 16px; border-radius: 30px; cursor: pointer; font-weight: bold; margin-bottom: 15px; margin-left: 10px; }
+        .btn-atualizar:hover { background: var(--green); color: #000; }
+        .link-pool { color: var(--accent); text-decoration: none; margin-left: 8px; font-size: 14px; }
+        .link-pool:hover { color: var(--green); }
+        .risk-dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 6px; }
+        .risk-verde { background: #00ff88; box-shadow: 0 0 6px #00ff88; }
+        .risk-amarelo { background: #ffcc00; box-shadow: 0 0 6px #ffcc00; }
+        .risk-vermelho { background: #ff3e3e; box-shadow: 0 0 6px #ff3e3e; }
+        .signal-icon { display: inline-block; width: 16px; height: 16px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+        .info-icon { display: inline-block; width: 18px; height: 18px; background: #2f81f7; color: white; border-radius: 50%; text-align: center; font-size: 12px; font-weight: bold; line-height: 18px; cursor: pointer; margin-left: 8px; }
+        .tooltip { position: relative; display: inline-block; }
+        .tooltip .tooltiptext { visibility: hidden; width: 280px; background-color: #1e2a38; color: #fff; text-align: left; border-radius: 6px; padding: 8px; position: absolute; z-index: 1; bottom: 125%; left: 50%; margin-left: -140px; font-size: 11px; border: 1px solid var(--accent); }
+        .tooltip:hover .tooltiptext { visibility: visible; }
+        .robot-log { background: #0d1117; padding: 12px; border-radius: 12px; font-family: monospace; font-size: 11px; height: 150px; overflow-y: auto; margin-top: 15px; }
+        .period-select { background: #21262d; color: white; border: 1px solid #30363d; border-radius: 30px; padding: 8px 12px; margin-left: 10px; }
+        .simulador-tab-container { padding: 15px; background: #0f141c; border-radius: 16px; margin-top: 10px; }
+        .simulador-pool-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #0d1117; border-radius: 12px; margin-bottom: 8px; border: 1px solid #30363d; }
+        .simulador-pool-name { font-weight: bold; color: white; }
+        .simulador-pool-apr { color: var(--green); font-size: 0.8rem; }
+        .simulador-percent-input { width: 80px; background: #161b22; border: 1px solid #30363d; color: white; padding: 8px; border-radius: 8px; text-align: center; }
+        .simulador-result-highlight { background: linear-gradient(135deg, #1a2330, #0f141c); border-radius: 16px; padding: 15px; margin-top: 15px; }
+        .simulador-stat { font-size: 1.5rem; font-weight: bold; color: var(--green); }
+
+        /* ===== NOVOS ESTILOS - MELHORIAS DADOS DE MERCADO ===== */
+
+        /* Loading Spinner */
+        .loading-overlay {
+            display: none;
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(13,17,23,0.85);
+            border-radius: 16px;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .loading-overlay.visible { display: flex; }
+        .spinner {
+            width: 40px; height: 40px;
+            border: 3px solid #30363d;
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading-text { color: var(--text); font-size: 12px; }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text);
+        }
+        .empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; }
+        .empty-state p { font-size: 13px; margin-bottom: 16px; }
+        .empty-state button { background: var(--accent); border: none; color: white; padding: 10px 24px; border-radius: 30px; cursor: pointer; font-weight: bold; }
+
+        /* Variação colorida */
+        .var-positive { color: #00ff88; font-weight: bold; }
+        .var-negative { color: #ff3e3e; font-weight: bold; }
+        .var-neutral { color: var(--text); }
+
+        /* Ratio tooltip */
+        .ratio-wrapper { position: relative; display: inline-flex; align-items: center; gap: 6px; }
+        .ratio-tooltip {
+            display: none;
+            position: absolute;
+            bottom: 130%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e2a38;
+            border: 1px solid var(--accent);
+            border-radius: 8px;
+            padding: 6px 10px;
+            font-size: 11px;
+            white-space: nowrap;
+            z-index: 99;
+            color: white;
+        }
+        .ratio-wrapper:hover .ratio-tooltip { display: block; }
+
+        /* Score tooltip */
+        .score-tooltip-wrapper { position: relative; display: inline-flex; align-items: center; gap: 4px; cursor: help; }
+        .score-tooltip-box {
+            display: none;
+            position: absolute;
+            bottom: 130%;
+            right: 0;
+            background: #1e2a38;
+            border: 1px solid var(--accent);
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-size: 11px;
+            width: 220px;
+            z-index: 99;
+            color: #c9d1d9;
+            line-height: 1.6;
+        }
+        .score-tooltip-wrapper:hover .score-tooltip-box { display: block; }
+
+        /* Badge oportunidade */
+        .badge-oportunidade {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+        .badge-alta { background: rgba(0,255,136,0.15); color: #00ff88; border: 1px solid #00ff8866; }
+        .badge-media { background: rgba(255,204,0,0.15); color: #ffcc00; border: 1px solid #ffcc0066; }
+        .badge-baixa { background: rgba(255,62,62,0.15); color: #ff3e3e; border: 1px solid #ff3e3e66; }
+        .badge-neutro { background: rgba(139,148,158,0.15); color: #8b949e; border: 1px solid #8b949e66; }
+
+        /* Filtro feedback */
+        .filter-result-info {
+            font-size: 11px;
+            color: var(--text);
+            padding: 6px 12px;
+            background: #0d151f;
+            border-radius: 20px;
+            margin-bottom: 10px;
+            display: none;
+        }
+        .filter-result-info.visible { display: inline-block; }
+
+        /* Notícias melhoradas */
+        .news-live-card {
+            background: #1e2a38;
+            border-radius: 14px;
+            padding: 14px;
+            border-left: 4px solid var(--accent);
+            margin-bottom: 12px;
+            transition: 0.2s;
+            cursor: pointer;
+            text-decoration: none;
+            display: block;
+        }
+        .news-live-card:hover { transform: translateX(4px); border-color: var(--green); background: #1a2535; }
+        .news-live-card .news-source { font-size: 10px; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+        .news-live-card .news-title { color: white; font-size: 13px; font-weight: 600; margin-bottom: 6px; line-height: 1.4; }
+        .news-live-card .news-meta { font-size: 10px; color: var(--text); display: flex; gap: 10px; }
+        .news-live-card .news-tag { background: #2a3440; padding: 2px 8px; border-radius: 10px; }
+        .news-placeholder { text-align: center; padding: 30px; color: var(--text); font-size: 13px; }
+        .news-sources-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-top: 20px; }
+        .news-source-card {
+            background: #1e2a38;
+            border-radius: 14px;
+            padding: 16px;
+            border: 1px solid #3d4d62;
+            transition: 0.2s;
+        }
+        .news-source-card:hover { border-color: var(--accent); }
+        .news-source-card .source-name { color: var(--gold); font-weight: bold; font-size: 13px; margin-bottom: 5px; }
+        .news-source-card .source-desc { color: var(--text); font-size: 11px; margin-bottom: 10px; }
+        .news-source-card a { display: inline-block; color: white; background: var(--accent); text-decoration: none; padding: 5px 14px; border-radius: 20px; font-size: 11px; font-weight: bold; }
+        .news-source-card a:hover { background: var(--green); color: #000; }
+
+        /* Estratégia DCA interativo */
+        .dca-calc { background: #0d151f; border-radius: 16px; padding: 16px; margin: 15px 0; border: 1px solid #3d4d62; }
+        .dca-calc h4 { color: var(--gold); margin-bottom: 12px; }
+        .dca-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+        .dca-inputs input { background: #161b22; border: 1px solid #30363d; color: white; padding: 10px; border-radius: 12px; font-size: 13px; width: 100%; }
+        .dca-inputs label { font-size: 10px; color: var(--text); text-transform: uppercase; margin-bottom: 3px; display: block; }
+        .dca-resultado { margin-top: 10px; font-size: 12px; color: #c9d1d9; background: #161b22; border-radius: 10px; padding: 10px; }
+        .dca-resultado .dca-line { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px dashed #2a3440; }
+        .dca-resultado .dca-line:last-child { border-bottom: none; }
+
+        /* Alocação dinâmica */
+        .alocacao-calc { background: #0d151f; border-radius: 16px; padding: 16px; margin: 15px 0; border: 1px solid #3d4d62; }
+        .alocacao-calc h4 { color: var(--gold); margin-bottom: 12px; }
+        .alocacao-input-total { background: #161b22; border: 1px solid #30363d; color: white; padding: 10px; border-radius: 12px; font-size: 14px; width: 100%; margin-bottom: 12px; }
+        .alocacao-linha { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px dashed #2a3440; }
+        .alocacao-linha:last-child { border-bottom: none; }
+        .alocacao-nome { color: white; font-size: 12px; }
+        .alocacao-valor { color: var(--green); font-weight: bold; font-size: 13px; }
+        .alocacao-perc-input { width: 60px; background: #0d1117; border: 1px solid #3d4d62; color: white; padding: 5px; border-radius: 8px; text-align: center; font-size: 12px; }
+
+        /* MVRV histórico */
+        .mvrv-history { margin-top: 15px; }
+        .mvrv-history-title { color: var(--gold); font-size: 12px; font-weight: bold; margin-bottom: 10px; }
+        .mvrv-history-item { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 1px dashed #2a3440; font-size: 12px; }
+        .mvrv-history-item:last-child { border-bottom: none; }
+        .mvrv-data { color: var(--text); }
+        .mvrv-val { font-family: monospace; font-weight: bold; }
+        .mvrv-regime-badge { padding: 2px 10px; border-radius: 20px; font-size: 10px; font-weight: bold; }
+        .mvrv-acumulacao { background: rgba(0,255,136,0.1); color: #00ff88; border: 1px solid #00ff8844; }
+        .mvrv-neutro { background: rgba(255,204,0,0.1); color: #ffcc00; border: 1px solid #ffcc0044; }
+        .mvrv-topo { background: rgba(255,62,62,0.1); color: #ff3e3e; border: 1px solid #ff3e3e44; }
+        .mvrv-fonte { font-size: 10px; color: var(--text); margin-top: 12px; text-align: center; }
+        .mvrv-fonte a { color: var(--accent); text-decoration: none; }
+
+        /* Indicadores auto-fetch badge */
+        .auto-fetch-badge {
+            display: inline-block;
+            background: rgba(0,255,136,0.1);
+            color: var(--green);
+            border: 1px solid #00ff8844;
+            border-radius: 20px;
+            padding: 2px 10px;
+            font-size: 10px;
+            margin-left: 8px;
+        }
+
+        /* Gauge visual */
+        .gauge-wrapper { margin: 15px 0; }
+        .gauge-scale { display: flex; justify-content: space-between; font-size: 10px; color: var(--text); margin-top: 4px; }
+        .gauge-bar { height: 20px; border-radius: 10px; background: linear-gradient(90deg, #ff3e3e 0%, #ff3e3e 20%, #ffcc00 40%, #ffcc00 60%, #00ff88 80%, #00ff88 100%); position: relative; margin: 8px 0; }
+        .gauge-marker { position: absolute; top: -6px; width: 4px; height: 32px; background: white; border-radius: 2px; transform: translateX(-50%); box-shadow: 0 0 8px white; transition: left 0.5s; }
+        .gauge-zones { display: flex; justify-content: space-between; font-size: 10px; margin-top: 2px; }
+        .gauge-zone { text-align: center; flex: 1; }
+
+        /* Indicadores status */
+        .indicador-status { display: flex; align-items: center; gap: 6px; margin-top: 4px; }
+        .indicador-dot { width: 8px; height: 8px; border-radius: 50%; }
+        .indicador-label-val { font-size: 11px; }
+
+        /* Btn refresh com loader */
+        .btn-refresh-loading { opacity: 0.6; pointer-events: none; }
+        .btn-refresh-loading::after { content: " ⏳"; }
+
+        /* Estratégias conectadas ao MVRV */
+        .estrategia-regime-tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+        .regime-acumulacao { background: rgba(0,255,136,0.15); color: #00ff88; }
+        .regime-neutro { background: rgba(255,204,0,0.15); color: #ffcc00; }
+        .regime-topo { background: rgba(255,62,62,0.15); color: #ff3e3e; }
+
+        /* Score interativo */
+        .score-live-update { transition: all 0.4s; }
+        .score-blink { animation: scoreBlink 0.3s ease-in-out 2; }
+        @keyframes scoreBlink { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+        /* Auto liquidity histórico */
+        .regime-history-list { margin-top: 10px; }
+        .regime-history-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: #0d151f; border-radius: 10px; margin-bottom: 6px; font-size: 12px; }
+        .regime-history-date { color: var(--text); }
+        .regime-history-regime { font-weight: bold; }
+        .regime-history-estrategia { color: var(--text); font-size: 11px; }
+
+        /* Pools estratégicas filtros */
+        .estrategicas-filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px; }
+        .estrategica-filter-btn { background: #1e2a38; border: 1px solid #3d4d62; color: var(--text); padding: 5px 14px; border-radius: 20px; cursor: pointer; font-size: 11px; font-weight: bold; transition: 0.2s; }
+        .estrategica-filter-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+
+        /* Calendário embed */
+        #calendarioEmbed { width: 100%; min-height: 400px; border-radius: 16px; overflow: hidden; border: 1px solid #30363d; }
+
+        /* Notícia destaque */
+        .news-destaque-chip {
+            display: inline-block;
+            background: var(--red);
+            color: white;
+            font-size: 9px;
+            font-weight: bold;
+            padding: 2px 7px;
+            border-radius: 10px;
+            margin-right: 6px;
+            vertical-align: middle;
+            animation: pulse 1.5s infinite;
+        }
+    </style>
+</head>
+<body>
+
+<div class="card" id="mainCard">
+    <div style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 10px;">
+        <h4 style="flex:1;">⚡ MESTRE DO SCALPING PRO ⚡</h4>
+    </div>
+    <button class="btn-mode" onclick="toggleMode()">🖥️ ALTERNAR MODO COMPUTADOR</button>
+    <div class="time-selector">
+        <button class="time-btn active" data-t="1" onclick="setTF('1', this)">⚡ SCALP (1m)</button>
+        <button class="time-btn" data-t="15" onclick="setTF('15', this)">🔭 DAY TRADE (15m)</button>
+    </div>
+    <select id="pairSelector" onchange="onSymbolChange()">
+        <optgroup label="📈 Binance"><option value="BINANCE:BTCUSDT" selected>₿ BTC/USDT (Binance)</option><option value="BINANCE:ETHUSDT">⟠ ETH/USDT (Binance)</option><option value="BINANCE:SOLUSDT">◎ SOL/USDT (Binance)</option></optgroup>
+        <optgroup label="🌀 Hyperliquid"><option value="BYBIT:BTCUSDT">₿ BTC/USD (Hyperliquid)</option><option value="BYBIT:ETHUSDT">⟠ ETH/USD (Hyperliquid)</option><option value="BYBIT:SOLUSDT">◎ SOL/USD (Hyperliquid)</option></optgroup>
+        <optgroup label="🏅 Metais & Energia"><option value="TVC:GOLD">🥇 Ouro (XAU/USD)</option><option value="TVC:SILVER">🥈 Prata (XAG/USD)</option><option value="TVC:USOIL">🛢️ Petróleo WTI</option></optgroup>
+    </select>
+    <div class="price" id="priceText">$ --,---.--</div>
+    <div class="score-container"><div class="score-text"><span>🔥 Confluência</span><span id="scoreValue">40/100</span></div><div class="score-bar"><div class="score-fill" id="scoreFill" style="width:40%"></div></div><div class="score-text"><span id="scoreLabel">Evitar operação</span><span id="probabilidade">Baixa probabilidade</span></div></div>
+    <div id="alertaBadge" class="badge-alerta" style="display: none;">🚨 ENTRADA FORTE DETECTADA</div>
+    <div class="status-grid">
+        <div id="statusBox" class="status-bar"><div class="light-glow"></div><span class="status-label">SINAL GERAL</span><span class="status-value"><span id="sinalGeralIcon" class="signal-icon" style="background:#ffcc00;"></span><span id="statusText">⚠️ AGUARDAR</span></span></div>
+        <div id="rsiBox" class="status-bar"><div class="light-glow"></div><span class="status-label">FILTRO TÉCNICO</span><span class="status-value"><span id="sinalTecnicoIcon" class="signal-icon" style="background:#ff3e3e;"></span><span id="rsiText">📉 VENDA</span></span></div>
+        <div id="momBox" class="status-bar"><div class="light-glow"></div><span class="status-label">MOMENTUM</span><span class="status-value"><span id="sinalMomentumIcon" class="signal-icon" style="background:#ffcc00;"></span><span id="momText">⚖️ NEUTRO</span></span></div>
+    </div>
+    <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 11px;"><span>📊 Volatilidade: <span id="volText">MÉDIA</span></span><span>⏰ Sessão: <span id="sessaoText">Londres</span></span></div>
+    <div class="modo-operacao"><span id="statusModo">Modo Operação: OFF</span><label class="switch"><input type="checkbox" id="lockScreenToggle"><span class="slider"></span></label></div>
+    <div class="alarme-section"><div class="alarme-title"><span>🔔 ALARME DE PREÇO</span></div><div class="alarme-input-group"><input type="number" id="alarmePreco" class="alarme-input" placeholder="Preço alvo (ex: 75000)" step="100"><button class="alarme-btn" onclick="adicionarAlarme()">Adicionar</button></div><div class="alarme-lista" id="alarmeLista"><div style="color: var(--text); text-align: center; padding: 10px;">Nenhum alarme definido</div></div></div>
+    <div id="chart_container"></div>
+    <div class="inputs-grid"><div><label>💰 Capital ($)</label><input type="number" id="capital" value="300"></div><div><label>⚡ Alavancagem</label><input type="number" id="lev" value="10"></div><div><label>✅ Gain %</label><input type="number" id="tpP" value="1.0" step="0.1"></div><div><label>🛑 Stop %</label><input type="number" id="slP" value="1.0" step="0.1"></div></div>
+    <button class="btn-calc" onclick="calc()">📊 CALCULAR ALVOS</button>
+    <div id="results" class="res"><div style="display:flex; justify-content:space-between;"><span>🟢 TP:</span> <span id="resTP" style="color:var(--green);"></span></div><div style="display:flex; justify-content:space-between; margin-top:10px;"><span>🔴 SL:</span> <span id="resSL" style="color:var(--red);"></span></div></div>
+    <div class="projects-section"><div class="projects-grid"><a href="https://site-557591544835-620634786284.southamerica-east1.run.app" class="project-btn" target="_blank">Sinais Invest</a><a href="https://site-combustai-620634786284.southamerica-east1.run.app" class="project-btn" target="_blank">CombustAI</a><a href="https://site-559791916621-620634786284.southamerica-east1.run.app" class="project-btn" target="_blank">Registro DCA</a><a href="https://pepinometro-620634786284.southamerica-east1.run.app" class="project-btn" target="_blank">Pepinômetro</a><a href="https://historia-copas-620634786284.southamerica-east1.run.app" class="project-btn" target="_blank">História Copas</a><a href="https://investopcao.culturabuilder.com" class="project-btn" target="_blank">InvestOpção</a><button class="project-btn" onclick="openPoolsModal()" style="background: var(--purple); color: white;">🌊 Dados de Mercado</button></div></div>
+    <div class="ad-container"><span style="color:var(--gold); font-weight:800; font-size:16px;">📺 ATMOS IPTV</span><br><span style="font-size:12px;">+15.000 canais • 4K • Estável</span><a href="https://wa.me/5597991916621" target="_blank" class="btn-ad">TESTE GRÁTIS</a></div>
+    <table class="market-table"><tr><td colspan="3" class="market-header">🌍 SESSÕES CRIPTO / FOREX</td></tr>
+    <tr><td>🌏 Ásia</td><td>21:00-01:00</td><td style="color:var(--gold); text-align:right;">● médio</td></tr>
+    <tr><td>🇪🇺 Londres</td><td>04:00-09:00</td><td style="color:var(--green); text-align:right;">● alto</td></tr>
+    <tr><td>🇺🇸 NY (Pico)</td><td>10:00-14:00</td><td style="color:var(--green); text-align:right;">● PICO</td></tr>
+    <tr><td colspan="3" class="market-header">🏆 EURO, PRATA & WTI</td></tr>
+    <tr><td>🥇 Metais (NY)</td><td>09:20-15:30</td><td style="color:var(--gold); text-align:right;">● liquidez</td></tr>
+    <tr><td>🛢️ Petróleo (WTI)</td><td>10:00-16:30</td><td style="color:var(--accent); text-align:right;">● volatilidade</td></tr>
+    </table>
+    <div class="news-section"><h4>📰 Notícias e Calendário</h4><div style="display: flex; flex-wrap: wrap; gap: 15px; justify-content: space-between;"><div style="flex: 1; min-width: 200px;"><div class="news-block"><h5>📅 Calendário Econômico</h5><a href="https://www.tradingview.com/economic-calendar/" target="_blank" style="color: var(--accent);">TradingView Economic Calendar</a></div></div><div style="flex: 2; min-width: 300px;"><div class="news-block"><h5>📰 Principais Notícias Cripto</h5><div class="news-links"><a href="https://livecoins.com.br/" target="_blank">Livecoins</a><a href="https://cointelegraph.com.br/" target="_blank">CoinTelegraph Brasil</a><a href="https://www.coindesk.com/" target="_blank">CoinDesk</a><a href="https://cointelegraph.com/" target="_blank">CoinTelegraph</a><a href="https://www.cryptobreaking.com/" target="_blank">Crypto Breaking</a></div></div></div></div></div>
+    <button class="project-btn" onclick="openDonationModal()" style="background:var(--gold); color:#000; width:100%; margin-top:15px;">💰 Donativos</button>
+</div>
+
+<div class="floating-ball" onclick="openPasswordModal()">🔓</div>
+
+<!-- MODAL SENHA -->
+<div id="passwordModal" class="modal"><div class="modal-content" style="max-width:350px;"><h2>🔐 ACESSO</h2><input type="password" id="passInput" maxlength="9" placeholder="*********" style="text-align:center; font-size:24px; letter-spacing:4px;"><div class="button-group"><button class="close-btn" onclick="checkPassword()">VALIDAR</button><button class="close-btn" onclick="fecharModal('passwordModal')">Fechar</button></div></div></div>
+
+<!-- MODAL ROBÔ -->
+<div id="robotModal" class="modal"><div class="modal-content"><h2>🤖 ROBÔ DE LIQUIDEZ</h2><p style="color:var(--green);">🔓 Acesso autorizado</p>
+<div class="modo-operacao" style="margin-bottom: 15px;"><span>🎯 Filtro MVRV</span><label class="switch"><input type="checkbox" id="mvrvFilterToggle"><span class="slider"></span></label></div>
+<div id="mvrvStatusRobot" style="font-size: 12px; color: var(--text); margin-bottom: 15px; padding: 10px; background: #0d151f; border-radius: 12px; display: none;">📊 Regime atual: <strong id="mvrvRegimeAtualRobot">-</strong><br>💡 <span id="mvrvRecomendacaoRobot">-</span></div>
+<div class="alarme-section" style="border-color: var(--green); margin-bottom: 20px;"><div class="alarme-title">🧪 SIMULADOR DE AUTOMAÇÃO (Demo)</div>
+<div class="grid-2">
+<div><label>📊 Pool</label><select id="demoPoolSelect"></select></div>
+<div><label>💰 Valor (USDC)</label><input type="number" id="demoAmount" value="1000" step="100"></div>
+<div><label>📈 Range (%)</label><select id="demoRangeSelect"><option>±5%</option><option selected>±10%</option><option>±15%</option></select></div>
+<div><label>🔄 Auto-ajuste</label><select id="demoAutoAdjust"><option>ON</option><option>OFF</option></select></div>
+<div><label>🚨 Modo Crash</label><select id="demoCrash"><option>OFF</option><option>ON</option></select></div>
+</div>
+<button class="btn-calc" onclick="simularBotLiquidez()" style="margin-top: 10px;">▶️ ATIVAR ROBÔ (DEMO)</button>
+<div id="demoLog" class="robot-log">[Bot] Aguardando simulação...</div>
+<div id="demoResultado" style="background: #0d151f; padding: 12px; border-radius: 12px; margin-top: 12px; font-size: 12px;"></div>
+<p style="font-size: 10px; margin-top: 8px; color: var(--text);">⚠️ Versão demonstrativa.</p>
+</div>
+<div class="security-warning">⚠️ ATENÇÃO: Use apenas em ambiente local. Chave privada não é salva.</div>
+<h3>🔌 MODO REAL (Hyperliquid)</h3>
+<div class="campo"><label>Endereço da conta principal</label><input type="text" id="hlMainAddress" value="0x9a761Cc6331Fd28D0b04811135dfA233f6499C9C"></div>
+<div class="campo"><label>Endereço da API wallet</label><input type="text" id="hlApiAddress" value="0xa9adb7057b5531c077962289a69bbadc4973e381"></div>
+<div class="campo"><label>Chave privada da API wallet</label><input type="password" id="hlApiPrivateKey" placeholder="0x..."></div>
+<button class="close-btn" onclick="connectHyperliquid()">🔌 Validar e Conectar</button>
+<div class="console" id="apiConsole">[API] Desconectado</div>
+<div class="grid-2"><div><label>Stop Loss %</label><input type="number" id="botSL" value="1.5" step="0.1"></div><div><label>Take Profit %</label><input type="number" id="botTP" value="1.0" step="0.1"></div></div>
+<div class="campo"><label>Par</label><select id="botPair"><option value="BTC">₿ BTC/USDC</option><option value="ETH">⟠ ETH/USDC</option><option value="SOL">◎ SOL/USDC</option><option value="GOLD">🥇 XAU/USD</option><option value="SILVER">🥈 XAG/USD</option><option value="WTI">🛢️ WTI</option></select></div>
+<button class="close-btn" onclick="placeRealOrder()">🚀 ENVIAR ORDEM REAL</button>
+<div class="button-group"><button class="close-btn" onclick="fecharModal('robotModal')">Fechar</button></div></div></div>
+
+<!-- MODAL DONATIVOS -->
+<div id="donationModal" class="modal"><div class="modal-content"><h2>💰 Donativos</h2><p style="background:#1e2a36; padding:15px; border-radius:15px; margin-bottom:20px;">Projeto independente, sem fins lucrativos. Contribuições ajudam a manter os custos. Obrigado!</p>
+<div class="donation-item" style="border-left-color:#8a2be2;"><strong>⚡ Lightning Network</strong><p>cloggedparrot01@walletofsatoshi.com <button class="copy-btn" onclick="copyText('cloggedparrot01@walletofsatoshi.com')">Copiar</button></p></div>
+<div class="donation-item" style="border-left-color:#f7931a;"><strong>₿ Bitcoin</strong><p>bc1q3zf09xtensa5kag3nz6jsvqyle3sgnmns0j9n5 <button class="copy-btn" onclick="copyText('bc1q3zf09xtensa5kag3nz6jsvqyle3sgnmns0j9n5')">Copiar</button></p></div>
+<div class="donation-item" style="border-left-color:#627eea;"><strong>🔷 EVM</strong><p>0xAd944bA180610F1Fe43151eD81c0084C918c68e1 <button class="copy-btn" onclick="copyText('0xAd944bA180610F1Fe43151eD81c0084C918c68e1')">Copiar</button></p></div>
+<div class="donation-item" style="border-left-color:#14f195;"><strong>◎ Solana</strong><p>EtSD7W7YG36ZuMAAX6bwJYJ9keciRK7cP7rJiadiZdmm <button class="copy-btn" onclick="copyText('EtSD7W7YG36ZuMAAX6bwJYJ9keciRK7cP7rJiadiZdmm')">Copiar</button></p></div>
+<div class="donation-item" style="border-left-color:#32bcad;"><strong>🇧🇷 Pix</strong><p>127d59fc-1f37-4e8e-9fd4-295e1883727b <button class="copy-btn" onclick="copyText('127d59fc-1f37-4e8e-9fd4-295e1883727b')">Copiar</button></p></div>
+<div class="button-group"><button class="close-btn" onclick="fecharModal('donationModal')">Fechar</button></div></div></div>
+
+<!-- SUBMODAIS ESTRATÉGIAS (mantidos iguais) -->
+<div id="submodalEstrategia1" class="submodal"><div class="submodal-content"><h2>📘 Estratégia 1: Market Making Adaptativo</h2><h3>🎯 O que é?</h3><p>Detecta fluxo agressivo e ajusta o range ANTES do preço mover.</p><p style="margin-top:10px; font-size:13px;"><strong>Exemplo:</strong> LP em SOL/USDC ±10%. Se volume comprador &gt; 65%, move range para cima. Se vendedor &gt; 65%, move para baixo.</p><p style="margin-top:10px; color:#ff9900; font-size:12px;">⚠️ Risco: Em mercados com fluxo falso, o ajuste pode causar saída do range ideal.</p><div class="button-group"><button onclick="fecharSubmodal('submodalEstrategia1')">Fechar</button></div></div></div>
+<div id="submodalEstrategia2" class="submodal"><div class="submodal-content"><h2>📘 Estratégia 2: Gamma Scalping</h2><h3>🎯 O que é?</h3><p>Usar a posição LP como "gamma" – lucrar com volatilidade por meio de hedge.</p><p style="margin-top:10px; font-size:13px;"><strong>Exemplo:</strong> LP em ETH/USDC com $10.000, delta neutra. Se o preço sobe, vende spot para rebalancear.</p><div class="button-group"><button onclick="fecharSubmodal('submodalEstrategia2')">Fechar</button></div></div></div>
+<div id="submodalEstrategia3" class="submodal"><div class="submodal-content"><h2>📘 Estratégia 3: Liquidity Sniping</h2><h3>🎯 O que é?</h3><p>Entrar em pools novas com APR muito alto antes da massa.</p><p style="margin-top:10px; color:#ff9900; font-size:12px;">⚠️ Risco: Pools novas podem ser fraudulentas. Use apenas pools auditadas.</p><div class="button-group"><button onclick="fecharSubmodal('submodalEstrategia3')">Fechar</button></div></div></div>
+<div id="submodalEstrategia4" class="submodal"><div class="submodal-content"><h2>📘 Estratégia 4: Range por Volatilidade</h2><h3>🎯 Fórmula</h3><p>Range = Preço atual ± (ATR × fator)<br>Fator 1.5 (conservador) | 2.5 (moderado) | 3.5 (agressivo)</p><div class="button-group"><button onclick="fecharSubmodal('submodalEstrategia4')">Fechar</button></div></div></div>
+<div id="submodalEstrategia5" class="submodal"><div class="submodal-content"><h2>📘 Estratégia 5: Regime de Mercado</h2><h3>🎯 O que é?</h3><p>Bull → range aberto | Bear → foco em stable | Sideways → range curto</p><div class="button-group"><button onclick="fecharSubmodal('submodalEstrategia5')">Fechar</button></div></div></div>
+<div id="submodalEstrategia6" class="submodal"><div class="submodal-content"><h2>📘 Estratégia 6: Rebalanceamento por Delta</h2><h3>🎯 O que é?</h3><p>Manter exposição ideal (ex: 60% BTC / 40% USDC) rebalanceando automaticamente.</p><div class="button-group"><button onclick="fecharSubmodal('submodalEstrategia6')">Fechar</button></div></div></div>
+<div id="submodalEstrategia7" class="submodal"><div class="submodal-content"><h2>📘 Estratégia 7: Stop Loss Inteligente</h2><h3>🎯 O que é?</h3><p>Remover liquidez quando preço sai do range + tendência forte.</p><div class="button-group"><button onclick="fecharSubmodal('submodalEstrategia7')">Fechar</button></div></div></div>
+<div id="submodalEstrategia8" class="submodal"><div class="submodal-content"><h2>📘 Estratégia 8: Multi-Pool Optimization</h2><h3>🎯 O que é?</h3><p>Dividir capital entre diferentes pools para diversificar risco.</p><div class="button-group"><button onclick="fecharSubmodal('submodalEstrategia8')">Fechar</button></div></div></div>
+<div id="submodalEstrategia9" class="submodal"><div class="submodal-content"><h2>📘 Estratégia 9: Arbitragem entre Pools</h2><h3>🎯 O que é?</h3><p>Lucrar com diferenças de preço do mesmo ativo em diferentes pools.</p><div class="button-group"><button onclick="fecharSubmodal('submodalEstrategia9')">Fechar</button></div></div></div>
+<div id="submodalEstrategia10" class="submodal"><div class="submodal-content"><h2>📘 Estratégia 10: Fee Harvesting</h2><h3>🎯 O que é?</h3><p>Coletar taxas periodicamente e reinvestir para juros compostos.</p><div class="button-group"><button onclick="fecharSubmodal('submodalEstrategia10')">Fechar</button></div></div></div>
+<div id="submodalEstrategia11" class="submodal"><div class="submodal-content"><h2>📘 Estratégia 11: Liquidez Direcional</h2><h3>🎯 O que é?</h3><p>Range assimétrico para apostar na direção.</p><div class="button-group"><button onclick="fecharSubmodal('submodalEstrategia11')">Fechar</button></div></div></div>
+<div id="submodalEstrategia12" class="submodal"><div class="submodal-content"><h2>📘 Estratégia 12: Machine Learning</h2><h3>🎯 O que é?</h3><p>Usar modelos de ML para prever ranges e entradas.</p><div class="button-group"><button onclick="fecharSubmodal('submodalEstrategia12')">Fechar</button></div></div></div>
+<div id="submodalEstrategia13" class="submodal"><div class="submodal-content"><h2>📘 Estratégia 13: Coin-M Inverse Long</h2><h3>🎯 O que é?</h3><p>Operar contratos perpétuos inversos (Coin-M) na Binance.</p><div class="button-group"><button onclick="fecharSubmodal('submodalEstrategia13')">Fechar</button></div></div></div>
+<div id="submodalCicloDetalhes" class="submodal"><div class="submodal-content"><h2>📘 Indicadores de Ciclo</h2><h3>📊 MVRV</h3><p>Abaixo de 1 = barato. Acima de 3.5 = caro.</p><h3>📈 NUPL</h3><p>&lt;0.25 = capitulação | &gt;0.6 = euforia.</p><h3>🔥 SOPR</h3><p>&lt;1 = prejuízo (compra) | &gt;1.1 = lucro (venda).</p><h3>🏦 Realized Price</h3><p>Abaixo do preço atual = oportunidade histórica.</p><h3>📉 RHODL</h3><p>&lt;1000 = acumulação | &gt;5000 = topo.</p><h3>⛏️ Puell</h3><p>&lt;0.5 = fundo | &gt;3 = topo.</p><div class="button-group"><button onclick="fecharSubmodal('submodalCicloDetalhes')">Fechar</button></div></div></div>
+
+<!-- ===== MODAL DADOS DE MERCADO (MELHORADO) ===== -->
+<div id="poolsModal" class="modal">
+<div class="modal-content pool-modal-content">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <h2 style="color: var(--gold); margin: 0;">📊 Dados de Mercado</h2>
+        <div>
+            <button class="btn-atualizar" onclick="atualizarTudo()" id="btnAtualizarTodos" style="margin-right: 10px;">🔄 Atualizar</button>
+            <button onclick="closePoolsModal()" style="background: none; border: none; color: var(--text); font-size: 24px; cursor: pointer;">✕</button>
+        </div>
+    </div>
+
+    <div class="tabs-container">
+        <button class="tab-btn active" onclick="switchTab('pools')">🌊 Top Pools</button>
+        <button class="tab-btn" onclick="switchTab('poolsEstrategicas')">🎯 Estratégicas</button>
+        <button class="tab-btn" onclick="switchTab('news')">📰 Notícias</button>
+        <button class="tab-btn" onclick="switchTab('strategies')">📊 Estratégias</button>
+        <button class="tab-btn robot" onclick="switchTab('robot')">🤖 Robô</button>
+        <button class="tab-btn" onclick="switchTab('mvrv')">📊 MVRV</button>
+        <button class="tab-btn" onclick="switchTab('ciclo')">📈 Indicadores</button>
+        <button class="tab-btn" onclick="switchTab('liquidity')">💧 Auto Liquidity</button>
+    </div>
+
+    <!-- ===== TAB: TOP POOLS ===== -->
+    <div id="poolsTab" class="tab-content active">
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+            <input type="text" id="searchPairInput" class="search-pair-input" style="flex:1; margin-bottom:0;" placeholder="🔍 Buscar par (ex: SOL, BTC, USDC)..." onkeyup="filtrarPorPar()">
+            <button class="btn-atualizar" onclick="atualizarPoolsCompleto()" id="btnAtualizarPools" style="margin:0;">🔄 Atualizar</button>
+        </div>
+
+        <!-- Legenda Ratio e Score -->
+        <div style="display:flex; gap:10px; margin-bottom:12px; flex-wrap:wrap;">
+            <div class="tooltip" style="font-size:11px; color:var(--text); cursor:help;">
+                ℹ️ O que é <strong>Ratio</strong>?
+                <span class="tooltiptext">Proporção entre os dois ativos da pool. Ex: 60/40 = 60% Token A, 40% Token B. Quanto mais próximo de 50/50, mais equilibrada.</span>
+            </div>
+            <div class="tooltip" style="font-size:11px; color:var(--text); cursor:help;">
+                ℹ️ Como é calculado o <strong>Score</strong>?
+                <span class="tooltiptext">Score = (APR × 0.4) + (Volume/TVL × 0.3) + (Idade × 0.15) + (Fee × 0.15). Quanto maior, melhor a relação risco/retorno.</span>
+            </div>
+        </div>
+
+        <span id="filtroResultadoInfo" class="filter-result-info"></span>
+
+        <div class="warning-high-apr">⚠️ APR e Fee APY atualizados dinamicamente. Analise sempre volume e liquidez antes de alocar.</div>
+
+        <div class="mode-toggle">
+            <button id="modoAutoBtn" class="mode-btn" onclick="setModo('auto')">🤖 Score</button>
+            <button id="modoManualBtn" class="mode-btn" onclick="setModo('manual')">👆 Manual</button>
+            <button id="modoAPRBtn" class="mode-btn apr-high active" onclick="setModo('apr')">🔥 APR alto</button>
+            <select id="feePeriodSelect" class="period-select" onchange="renderPoolsTable()">
+                <option value="fee1h">Fee APY 1h</option>
+                <option value="fee6h">Fee APY 6h</option>
+                <option value="fee24h" selected>Fee APY 24h</option>
+                <option value="fee7d">Fee APY 7d</option>
+                <option value="fee30d">Fee APY 30d</option>
+            </select>
+        </div>
+
+        <div class="filter-row">
+            <div class="filter-item"><label>TVL mínimo ($)</label><input type="number" id="filtroTVL" placeholder="ex: 10000" value="0" step="1000"></div>
+            <div class="filter-item"><label>Volume mínimo ($)</label><input type="number" id="filtroVolume" placeholder="ex: 5000" value="0" step="1000"></div>
+            <div class="filter-item"><label>APR mínimo (%)</label><input type="number" id="filtroAPR" placeholder="ex: 100" value="0" step="10"></div>
+            <button class="btn-filter" onclick="aplicarFiltros()">Aplicar</button>
+        </div>
+
+        <div style="position:relative;">
+            <div class="loading-overlay" id="loadingPools">
+                <div class="spinner"></div>
+                <div class="loading-text">Carregando pools...</div>
+            </div>
+            <div class="table-wrapper">
+                <table class="pools-table" id="poolsTable">
+                    <thead>
+                        <th onclick="ordenarPor('pool')" title="Clique para ordenar">Pool ↕</th>
+                        <th onclick="ordenarPor('network')">Network ↕</th>
+                        <th onclick="ordenarPor('dex')">DEX ↕</th>
+                        <th onclick="ordenarPor('tvl')">TVL ↕</th>
+                        <th>
+                            Ratio
+                            <span class="tooltip"><span class="info-icon">?</span>
+                                <span class="tooltiptext">Proporção entre os dois ativos. 50/50 = equilibrado. Desequilibrado indica movimento de preço recente.</span>
+                            </span>
+                        </th>
+                        <th onclick="ordenarPor('volume')">Vol. 24h ↕</th>
+                        <th onclick="ordenarPor('apr')">APR ↕</th>
+                        <th>Var 1h</th>
+                        <th>Var 6h</th>
+                        <th>Var 24h</th>
+                        <th>Var 7d</th>
+                        <th>Var 30d</th>
+                        <th onclick="ordenarPor('fee')">Fee ↕</th>
+                        <th onclick="ordenarPor('age')">Idade ↕</th>
+                        <th>
+                            Score
+                            <span class="tooltip"><span class="info-icon">?</span>
+                                <span class="tooltiptext">Score composto: APR (40%) + Volume/TVL (30%) + Idade (15%) + Fee (15%). Máximo: 100.</span>
+                            </span>
+                        </th>
+                        <th>Link</th>
+                    </thead>
+                    <tbody id="poolsTableBody">
+                        <tr><td colspan="16"><div class="empty-state"><div class="empty-icon">🌊</div><p>Clique em Atualizar para carregar as pools</p><button onclick="atualizarPoolsCompleto()">🔄 Carregar Pools</button></div></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== TAB: POOLS ESTRATÉGICAS ===== -->
+    <div id="poolsEstrategicasTab" class="tab-content">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h3 style="color: var(--gold); margin: 0;">🎯 Pools Estratégicas</h3>
+            <button class="btn-atualizar" onclick="atualizarPoolsEstrategicas()" id="btnAtualizarEstrategicas" style="margin:0;">🔄 Atualizar</button>
+        </div>
+
+        <div class="estrategicas-filters">
+            <button class="estrategica-filter-btn active" onclick="filtrarEstrategicas('todos', this)">Todos</button>
+            <button class="estrategica-filter-btn" onclick="filtrarEstrategicas('Solana', this)">Solana</button>
+            <button class="estrategica-filter-btn" onclick="filtrarEstrategicas('Ethereum', this)">Ethereum</button>
+            <button class="estrategica-filter-btn" onclick="filtrarEstrategicas('Base', this)">Base</button>
+            <button class="estrategica-filter-btn" onclick="filtrarEstrategicas('Arbitrum', this)">Arbitrum</button>
+            <button class="estrategica-filter-btn" onclick="filtrarEstrategicas('Bsc', this)">BSC</button>
+            <button class="estrategica-filter-btn" onclick="filtrarEstrategicas('Hyperliquid', this)">Hyperliquid</button>
+        </div>
+
+        <div id="filtroOportunidadeRow" style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:15px;">
+            <button class="estrategica-filter-btn active" onclick="filtrarOportunidade('todos', this)" data-oportunidade="todos">🌐 Todos</button>
+            <button class="estrategica-filter-btn" onclick="filtrarOportunidade('alta', this)" data-oportunidade="alta">🟢 Alta</button>
+            <button class="estrategica-filter-btn" onclick="filtrarOportunidade('media', this)" data-oportunidade="media">🟡 Média</button>
+            <button class="estrategica-filter-btn" onclick="filtrarOportunidade('baixa', this)" data-oportunidade="baixa">🔴 Baixa</button>
+        </div>
+
+        <p style="color: var(--text); margin-bottom: 15px; font-size:12px;">Pools curadas para estratégias baseadas no regime MVRV. <span id="contadorEstrategicas" style="color:var(--green); font-weight:bold;"></span></p>
+
+        <div style="position:relative;">
+            <div class="loading-overlay" id="loadingEstrategicas">
+                <div class="spinner"></div>
+                <div class="loading-text">Carregando pools estratégicas...</div>
+            </div>
+            <div class="table-wrapper">
+                <table class="pools-table" id="poolsEstrategicasTable" style="min-width:900px;">
+                    <thead>
+                        <th>Pool</th>
+                        <th>Network</th>
+                        <th>DEX</th>
+                        <th>TVL</th>
+                        <th>Ratio</th>
+                        <th>Vol. 24h</th>
+                        <th>APR</th>
+                        <th>Fee APY</th>
+                        <th>Fee</th>
+                        <th>Idade</th>
+                        <th>Oportunidade</th>
+                        <th>Link 🔗</th>
+                    </thead>
+                    <tbody id="poolsEstrategicasBody">
+                        <tr><td colspan="12"><div class="empty-state"><div class="empty-icon">🎯</div><p>Clique em Atualizar para carregar as pools estratégicas</p><button onclick="atualizarPoolsEstrategicas()">🔄 Carregar</button></div></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== TAB: NOTÍCIAS ===== -->
+    <div id="newsTab" class="tab-content">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="color: var(--gold); margin: 0;">📰 Notícias & Calendário</h3>
+            <button class="btn-atualizar" onclick="carregarNoticias()" id="btnAtualizarNoticias" style="margin:0;">🔄 Atualizar</button>
+        </div>
+
+        <!-- Calendário TradingView embed -->
+        <div style="margin-bottom: 25px;">
+            <h4 style="color:var(--gold); margin-bottom:12px; font-size:13px;">📅 Calendário Econômico</h4>
+            <div id="calendarioEmbed">
+                <div class="tradingview-widget-container">
+                    <div class="tradingview-widget-container__widget"></div>
+                    <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-events.js" async>
+                    {"width":"100%","height":"500","colorTheme":"dark","locale":"br","importanceFilter":"0,1","countryFilter":"us,eu,gb,cn,jp,br"}
+                    </script>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notícias ao vivo -->
+        <div>
+            <h4 style="color:var(--gold); margin-bottom:12px; font-size:13px;">📰 Últimas Notícias Cripto</h4>
+            <div id="noticiasLoading" style="text-align:center; padding:20px; color:var(--text); font-size:13px; display:none;">
+                <div class="spinner" style="margin:0 auto 10px;"></div>
+                Buscando notícias...
+            </div>
+            <div id="noticiasList"></div>
+        </div>
+
+        <!-- Fontes de notícias -->
+        <div style="margin-top: 25px;">
+            <h4 style="color:var(--gold); margin-bottom:12px; font-size:13px;">🌐 Fontes de Notícias</h4>
+            <div class="news-sources-grid">
+                <div class="news-source-card">
+                    <div class="source-name">🇧🇷 Livecoins</div>
+                    <div class="source-desc">Maior portal brasileiro de Bitcoin e criptomoedas</div>
+                    <a href="https://livecoins.com.br/" target="_blank">Acessar →</a>
+                </div>
+                <div class="news-source-card">
+                    <div class="source-name">📡 CoinTelegraph BR</div>
+                    <div class="source-desc">Notícias cripto em português, atualizado constantemente</div>
+                    <a href="https://cointelegraph.com.br/" target="_blank">Acessar →</a>
+                </div>
+                <div class="news-source-card">
+                    <div class="source-name">🌎 CoinDesk</div>
+                    <div class="source-desc">Principal fonte internacional de notícias cripto</div>
+                    <a href="https://www.coindesk.com/" target="_blank">Acessar →</a>
+                </div>
+                <div class="news-source-card">
+                    <div class="source-name">⚡ CoinTelegraph</div>
+                    <div class="source-desc">Cobertura global do mercado em inglês</div>
+                    <a href="https://cointelegraph.com/" target="_blank">Acessar →</a>
+                </div>
+                <div class="news-source-card">
+                    <div class="source-name">🔥 Crypto Breaking</div>
+                    <div class="source-desc">Últimas notícias e análises do mercado cripto</div>
+                    <a href="https://www.cryptobreaking.com/" target="_blank">Acessar →</a>
+                </div>
+                <div class="news-source-card">
+                    <div class="source-name">📊 The Block</div>
+                    <div class="source-desc">Análise on-chain, dados e notícias institucionais</div>
+                    <a href="https://www.theblock.co/" target="_blank">Acessar →</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== TAB: ESTRATÉGIAS ===== -->
+    <div id="strategiesTab" class="tab-content">
+        <div class="strategy-content">
+
+            <!-- Regime atual conectado ao MVRV -->
+            <div style="background:#1e2a38; border-radius:16px; padding:16px; margin-bottom:20px; border:1px solid var(--accent);">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <span style="font-weight:bold; color:var(--gold);">🧭 Regime Atual de Mercado</span>
+                    <span id="estratRegime" style="font-weight:bold; color:var(--green);">ACUMULAÇÃO</span>
+                </div>
+                <p style="font-size:12px; color:var(--text); margin-bottom:8px;" id="estratRecomendacaoTexto">Com MVRV em zona de acumulação, priorize estratégias de entrada e LP de alto APR.</p>
+                <div style="font-size:11px; color:var(--text);">💡 <strong style="color:white;">Estratégia recomendada pelo regime:</strong> <span id="estratRecomendada" style="color:var(--green);">Market Making + Fee Harvesting</span></div>
+            </div>
+
+            <h3>🧠 Estratégia 1: Market Making Adaptativo <button class="btn-detalhe" onclick="abrirSubmodal('submodalEstrategia1')">📘 Detalhes</button> <span class="estrategia-regime-tag regime-acumulacao">✅ Acumulação</span></h3>
+            <p>Detecta fluxo agressivo e ajusta o range ANTES do preço mover.</p><hr>
+
+            <h3>⚡ Estratégia 2: Gamma Scalping <button class="btn-detalhe" onclick="abrirSubmodal('submodalEstrategia2')">📘 Detalhes</button> <span class="estrategia-regime-tag regime-neutro">⚖️ Neutro</span></h3>
+            <p>Usa LP como posição delta neutra e faz hedge via trade.</p><hr>
+
+            <h3>🧬 Estratégia 3: Liquidity Sniping <button class="btn-detalhe" onclick="abrirSubmodal('submodalEstrategia3')">📘 Detalhes</button> <span class="estrategia-regime-tag regime-acumulacao">✅ Acumulação</span></h3>
+            <p>Entrar ANTES da massa em pools novas com APR alto.</p><hr>
+
+            <h3>🧮 Estratégia 4: Range por Volatilidade <button class="btn-detalhe" onclick="abrirSubmodal('submodalEstrategia4')">📘 Detalhes</button></h3>
+            <p>Range = Preço atual ± (ATR × fator)</p><hr>
+
+            <h3>🧠 Estratégia 5: Regime de Mercado <button class="btn-detalhe" onclick="abrirSubmodal('submodalEstrategia5')">📘 Detalhes</button></h3>
+            <ul><li><span class="strategy-badge">🟢 Bull</span> → range aberto</li><li><span class="strategy-badge">🔴 Bear</span> → foco em stable</li><li><span class="strategy-badge">🟡 Sideways</span> → range curto</li></ul><hr>
+
+            <h3>🧠 Estratégia 6: Rebalanceamento por Delta <button class="btn-detalhe" onclick="abrirSubmodal('submodalEstrategia6')">📘 Detalhes</button></h3>
+            <p>Mantém exposição ideal (ex: 60% BTC / 40% USDC).</p><hr>
+
+            <h3>🧠 Estratégia 7: Stop Loss Inteligente <button class="btn-detalhe" onclick="abrirSubmodal('submodalEstrategia7')">📘 Detalhes</button></h3>
+            <p>Remove liquidez quando preço sai do range + tendência forte.</p><hr>
+
+            <h3>🧠 Estratégia 8: Multi-Pool Optimization <button class="btn-detalhe" onclick="abrirSubmodal('submodalEstrategia8')">📘 Detalhes</button></h3>
+            <p>Divide capital em várias pools (stable, volátil, high APR).</p><hr>
+
+            <h3>🧠 Estratégia 9: Arbitragem entre Pools <button class="btn-detalhe" onclick="abrirSubmodal('submodalEstrategia9')">📘 Detalhes</button></h3>
+            <p>Lucra com diferenças de preço entre pools.</p><hr>
+
+            <h3>🧠 Estratégia 10: Fee Harvesting Automático <button class="btn-detalhe" onclick="abrirSubmodal('submodalEstrategia10')">📘 Detalhes</button> <span class="estrategia-regime-tag regime-acumulacao">✅ Acumulação</span></h3>
+            <p>Retira taxas periodicamente e reinveste.</p><hr>
+
+            <h3>🧠 Estratégia 11: Liquidez Direcional <button class="btn-detalhe" onclick="abrirSubmodal('submodalEstrategia11')">📘 Detalhes</button></h3>
+            <p>Range deslocado para apostar na direção.</p><hr>
+
+            <h3>🧠 Estratégia 12: Machine Learning <button class="btn-detalhe" onclick="abrirSubmodal('submodalEstrategia12')">📘 Detalhes</button></h3>
+            <p>Treina modelo para decidir melhor range.</p><hr>
+
+            <h3>🧠 Estratégia 13: Coin-M Inverse Long <button class="btn-detalhe" onclick="abrirSubmodal('submodalEstrategia13')">📘 Detalhes</button> <span class="estrategia-regime-tag regime-topo">🔴 Topo</span></h3>
+            <p>Opera contratos inversos na Binance.</p><hr>
+
+            <!-- Strategy Router Interativo -->
+            <h2 style="color:var(--gold); margin-top:25px;">🔥 Strategy Router Interativo</h2>
+            <div style="background:#0d151f; border-radius:16px; padding:16px; margin:15px 0;">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
+                    <div><label style="font-size:10px; color:var(--text); text-transform:uppercase;">Regime de Mercado</label>
+                    <select id="routerRegime" onchange="calcularRouter()" style="background:#161b22; border:1px solid #30363d; color:white; padding:8px; border-radius:12px; width:100%; font-size:13px; margin-top:4px;">
+                        <option value="trend">📈 Tendência</option>
+                        <option value="volatile">⚡ Volátil</option>
+                        <option value="sideways" selected>🟡 Lateral</option>
+                        <option value="crash">🔴 Crash</option>
+                        <option value="bull">🚀 Bull</option>
+                    </select></div>
+                    <div><label style="font-size:10px; color:var(--text); text-transform:uppercase;">MVRV Atual</label>
+                    <input type="number" id="routerMVRV" value="1.43" step="0.01" onchange="calcularRouter()" style="background:#161b22; border:1px solid #30363d; color:white; padding:8px; border-radius:12px; width:100%; font-size:13px; margin-top:4px;"></div>
+                </div>
+                <div id="routerResultado" style="background:#0a1018; border-radius:12px; padding:14px; font-size:13px; color:#c9d1d9;"></div>
+            </div>
+
+            <!-- DCA Calculável -->
+            <h2 style="color:var(--gold); margin-top:25px;">📉 DCA Inteligente — Calculadora</h2>
+            <div class="dca-calc">
+                <div class="dca-inputs">
+                    <div><label>💰 Capital Total ($)</label><input type="number" id="dcaCapital" value="10000" step="100" oninput="calcularDCA()"></div>
+                    <div><label>₿ Preço Atual ($)</label><input type="number" id="dcaPreco" value="67000" step="100" oninput="calcularDCA()"></div>
+                </div>
+                <div id="dcaResultado" class="dca-resultado"></div>
+            </div>
+
+            <!-- Alocação Dinâmica -->
+            <h2 style="color:var(--gold); margin-top:25px;">💰 Alocação de Capital — Simulador</h2>
+            <div class="alocacao-calc">
+                <label style="font-size:10px; color:var(--text); text-transform:uppercase; margin-bottom:4px; display:block;">Capital Total (USDC)</label>
+                <input type="number" class="alocacao-input-total" id="alocacaoCapital" value="10000" step="100" oninput="calcularAlocacao()">
+                <div id="alocacaoLinhas"></div>
+                <div id="alocacaoTotal" style="margin-top:10px; font-size:12px; color:var(--text);"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== TAB: ROBÔ ===== -->
+    <div id="robotTab" class="tab-content">
+        <div style="background:#ffcc00; color:#000; padding:20px; border-radius:16px; margin-bottom:20px;">
+            <h3>🤖 Simulador de Automação de Pools</h3>
+            <p style="font-size:13px; margin-top:5px;">Configure e simule o comportamento de um robô de liquidez.</p>
+        </div>
+
+        <!-- Status de conexão visual -->
+        <div style="background:#0d151f; border-radius:16px; padding:14px; margin-bottom:15px; display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:13px;">🔌 Status Hyperliquid:</span>
+            <span id="robotConexaoStatus" style="font-size:12px; font-weight:bold; color:#ff3e3e;">● Desconectado</span>
+        </div>
+
+        <div class="grid-2">
+            <div><label>Pool</label><select id="robotPoolSelect" style="background:#21262d; color:white; border:1px solid #30363d; padding:10px; border-radius:12px; width:100%;"></select></div>
+            <div><label>Valor (USDC)</label><input type="number" id="robotAmount" value="1000" step="100"></div>
+            <div><label>Range (%)</label><select id="robotRangeSelect" style="background:#21262d; color:white; border:1px solid #30363d; padding:10px; border-radius:12px; width:100%;"><option>±5%</option><option selected>±10%</option><option>±15%</option></select></div>
+            <div><label>Auto-ajuste</label><select id="robotAutoAdjust" style="background:#21262d; color:white; border:1px solid #30363d; padding:10px; border-radius:12px; width:100%;"><option>ON</option><option>OFF</option></select></div>
+            <div><label>Modo Crash</label><select id="robotCrash" style="background:#21262d; color:white; border:1px solid #30363d; padding:10px; border-radius:12px; width:100%;"><option>OFF</option><option>ON</option></select></div>
+        </div>
+
+        <button class="btn-calc" onclick="simularRobotLiquidez()">▶️ ATIVAR ROBÔ (DEMO)</button>
+        <div id="robotLog" class="robot-log">[Bot] Aguardando simulação...<br>💡 Configure os parâmetros acima e clique em ATIVAR.</div>
+        <div id="robotResultado" style="background:#0d151f;padding:12px;border-radius:12px;margin-top:12px;font-size:12px;"></div>
+        <p style="font-size:10px; margin-top:8px; color:var(--text);">⚠️ Versão demonstrativa – integração real com Meteora/Orca em breve.</p>
+    </div>
+
+    <!-- ===== TAB: MVRV ===== -->
+    <div id="mvrvTab" class="tab-content">
+        <div class="strategy-content">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <h3 style="margin:0;">📈 MVRV Ratio</h3>
+                <button class="btn-atualizar" onclick="atualizarMVRV()" id="btnAtualizarMVRV" style="margin:0;">🔄 Atualizar</button>
+            </div>
+
+            <!-- Gauge visual -->
+            <div class="gauge-wrapper">
+                <div style="font-size:12px; color:var(--text); margin-bottom:5px;">Posição no ciclo:</div>
+                <div class="gauge-bar">
+                    <div class="gauge-marker" id="mvrvGaugeMarker" style="left: 35%;"></div>
+                </div>
+                <div class="gauge-zones">
+                    <div class="gauge-zone" style="color:#ff3e3e;">🔴 Fundo<br><span style="font-size:9px;">&lt;1</span></div>
+                    <div class="gauge-zone" style="color:#ff9900;">🟠 Barato<br><span style="font-size:9px;">1-1.5</span></div>
+                    <div class="gauge-zone" style="color:#ffcc00;">🟡 Neutro<br><span style="font-size:9px;">1.5-2.5</span></div>
+                    <div class="gauge-zone" style="color:#00cc66;">🟢 Caro<br><span style="font-size:9px;">2.5-3.5</span></div>
+                    <div class="gauge-zone" style="color:#ff3e3e;">🔴 Topo<br><span style="font-size:9px;">&gt;3.5</span></div>
+                </div>
+            </div>
+
+            <div class="mvrv-card" style="margin-top:20px;">
+                <div style="display:flex;justify-content:space-between;margin-bottom:15px;">
+                    <span>📊 MVRV Total</span>
+                    <span id="mvrvValue" class="mvrv-value" style="color:var(--green);">—</span>
+                </div>
+                <div class="score-bar"><div id="mvrvFill" class="score-fill" style="width:0%;background:linear-gradient(90deg,#ff3e3e,#ffcc00,#00ff88);"></div></div>
+                <div style="display:flex;justify-content:space-between;margin:20px 0 10px;">
+                    <span>👤 STH MVRV (Curto prazo)</span>
+                    <span id="sthValue" style="color:var(--orange);font-weight:bold;">—</span>
+                </div>
+                <div class="score-bar"><div id="sthFill" class="score-fill" style="width:0%;background:#ff3e3e;"></div></div>
+                <div style="display:flex;justify-content:space-between;margin-top:15px;">
+                    <span>🧓 LTH MVRV (Longo prazo)</span>
+                    <span id="lthValue" style="font-weight:bold; color:var(--accent);">—</span>
+                </div>
+            </div>
+
+            <div class="modo-operacao" style="margin:15px 0;">
+                <span>🎯 Regime:</span>
+                <span id="regimeText" style="color:var(--gold);font-weight:bold;">—</span>
+            </div>
+
+            <div style="background:#0d151f; border-radius:14px; padding:14px; margin-bottom:15px;">
+                <div style="font-size:12px; color:var(--text); margin-bottom:5px;">⚡ Recomendação:</div>
+                <div id="mvrvRecomendacaoText" style="font-size:13px; color:#c9d1d9;">—</div>
+            </div>
+
+            <!-- Histórico de regimes dinâmico -->
+            <div class="mvrv-history">
+                <div class="mvrv-history-title">📜 Histórico de Regimes (últimos 7 dias)</div>
+                <div id="mvrvHistoricoLista"></div>
+                <div class="mvrv-fonte">Fonte: <a href="https://www.lookintobitcoin.com/charts/mvrv-zscore/" target="_blank">LookIntoBitcoin</a> · <a href="https://glassnode.com" target="_blank">Glassnode</a></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== TAB: INDICADORES DE CICLO ===== -->
+    <div id="cicloTab" class="tab-content">
+        <div class="strategy-content">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <h3 style="margin:0;">📈 Indicadores de Ciclo <span class="auto-fetch-badge">Auto</span></h3>
+                <button class="btn-atualizar" onclick="autoFetchIndicadores()" id="btnFetchIndicadores" style="margin:0;">🔄 Buscar Dados</button>
+            </div>
+
+            <div style="background:#1e2a38; border-radius:12px; padding:12px; margin-bottom:15px; font-size:12px; color:var(--text);">
+                💡 Os valores abaixo são pré-preenchidos com dados públicos recentes. Atualize para os mais recentes via fontes como <a href="https://glassnode.com" target="_blank" style="color:var(--accent);">Glassnode</a> ou <a href="https://www.lookintobitcoin.com" target="_blank" style="color:var(--accent);">LookIntoBitcoin</a>.
+            </div>
+
+            <div class="grid-2">
+                <div class="indicator-card">
+                    <div class="indicator-label">📊 MVRV <span class="tooltip"><span class="info-icon" style="font-size:10px; width:14px; height:14px; line-height:14px;">?</span><span class="tooltiptext">&lt;1 = fundo | 1-2.5 = neutro | &gt;3.5 = topo</span></span></div>
+                    <input type="number" id="inputMVRV" class="indicator-input" value="1.43" step="0.01" oninput="calcularScoreCiclo()">
+                    <div class="indicador-status" id="statusMVRV"></div>
+                    <button class="btn-detalhe" onclick="abrirSubmodal('submodalCicloDetalhes')">📘</button>
+                </div>
+                <div class="indicator-card">
+                    <div class="indicator-label">📈 NUPL <span class="tooltip"><span class="info-icon" style="font-size:10px; width:14px; height:14px; line-height:14px;">?</span><span class="tooltiptext">&lt;0.25 = capitulação | 0.25-0.5 = esperança | &gt;0.6 = euforia</span></span></div>
+                    <input type="number" id="inputNUPL" class="indicator-input" value="0.23" step="0.01" oninput="calcularScoreCiclo()">
+                    <div class="indicador-status" id="statusNUPL"></div>
+                </div>
+                <div class="indicator-card">
+                    <div class="indicator-label">🔥 SOPR <span class="tooltip"><span class="info-icon" style="font-size:10px; width:14px; height:14px; line-height:14px;">?</span><span class="tooltiptext">&lt;1 = vendendo com prejuízo (compra) | &gt;1.1 = realizando lucro (venda)</span></span></div>
+                    <input type="number" id="inputSOPR" class="indicator-input" value="1.06" step="0.01" oninput="calcularScoreCiclo()">
+                    <div class="indicador-status" id="statusSOPR"></div>
+                </div>
+                <div class="indicator-card">
+                    <div class="indicator-label">🏦 Realized Price ($) <span class="tooltip"><span class="info-icon" style="font-size:10px; width:14px; height:14px; line-height:14px;">?</span><span class="tooltiptext">Preço médio de compra de todos os BTC. Abaixo = zona de oportunidade.</span></span></div>
+                    <input type="number" id="inputRealizedPrice" class="indicator-input" value="40000" step="1000" oninput="calcularScoreCiclo()">
+                    <div class="indicador-status" id="statusRealizedPrice"></div>
+                </div>
+                <div class="indicator-card">
+                    <div class="indicator-label">📉 RHODL Ratio <span class="tooltip"><span class="info-icon" style="font-size:10px; width:14px; height:14px; line-height:14px;">?</span><span class="tooltiptext">&lt;1000 = acumulação | 1000-5000 = neutro | &gt;5000 = topo</span></span></div>
+                    <input type="number" id="inputRHODL" class="indicator-input" value="2160" step="100" oninput="calcularScoreCiclo()">
+                    <div class="indicador-status" id="statusRHODL"></div>
+                </div>
+                <div class="indicator-card">
+                    <div class="indicator-label">⛏️ Puell Multiple <span class="tooltip"><span class="info-icon" style="font-size:10px; width:14px; height:14px; line-height:14px;">?</span><span class="tooltiptext">&lt;0.5 = fundo mineradores | 0.5-2 = neutro | &gt;3 = topo</span></span></div>
+                    <input type="number" id="inputPuell" class="indicator-input" value="0.82" step="0.1" oninput="calcularScoreCiclo()">
+                    <div class="indicador-status" id="statusPuell"></div>
+                </div>
+            </div>
+
+            <!-- Gauge de score -->
+            <div class="gauge-wrapper" style="margin-top:20px;">
+                <div style="font-size:12px; color:var(--text); margin-bottom:5px;">Score do Ciclo:</div>
+                <div class="gauge-bar">
+                    <div class="gauge-marker" id="cicloGaugeMarker" style="left:50%;"></div>
+                </div>
+                <div class="gauge-zones">
+                    <div class="gauge-zone" style="color:#00ff88;">🟢 Fundo<br><span style="font-size:9px;">0-30</span></div>
+                    <div class="gauge-zone" style="color:#ffcc00;">🟡 Acum.<br><span style="font-size:9px;">30-50</span></div>
+                    <div class="gauge-zone" style="color:#ff9900;">🟠 Neutro<br><span style="font-size:9px;">50-70</span></div>
+                    <div class="gauge-zone" style="color:#ff3e3e;">🔴 Topo<br><span style="font-size:9px;">70-100</span></div>
+                </div>
+            </div>
+
+            <div class="mvrv-card" style="text-align:center; margin-top:15px;">
+                <div><span id="semaforoIcon" class="semaforo semaforo-amarelo"></span><span id="sinalTexto" style="font-size:24px;font-weight:bold;" class="score-live-update">NEUTRO</span></div>
+                <div class="score-grande score-live-update" id="scoreCiclo">0</div>
+                <div style="font-size:11px; color:var(--text); margin-top:8px;" id="scoreCicloDesc">Preencha ou atualize os indicadores acima para calcular o score em tempo real.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== TAB: AUTO LIQUIDITY ===== -->
+    <div id="liquidityTab" class="tab-content">
+        <div class="strategy-content">
+            <h3>🤖 AUTO LIQUIDITY</h3>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                <div class="mode-toggle" style="margin-bottom:0;">
+                    <button id="modoAutoLiquidityBtn" class="mode-btn active" onclick="setModoLiquidity('auto')">🤖 Automático</button>
+                    <button id="modoManualLiquidityBtn" class="mode-btn" onclick="setModoLiquidity('manual')">👆 Manual</button>
+                </div>
+                <button class="btn-atualizar" onclick="atualizarAPRsAutoLiquidity()" id="btnAtualizarAPRs" style="margin:0;">🔄 Atualizar APRs</button>
+            </div>
+
+            <div id="liquidityAutoContent">
+                <div class="mvrv-card">
+                    <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+                        <span>📊 Regime MVRV Atual:</span>
+                        <span id="liquidityRegime" style="color:var(--gold);font-weight:bold;">ACUMULAÇÃO</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;">
+                        <span>🎯 Estratégia Ativa:</span>
+                        <span id="liquidityStrategy" style="color:var(--green);">Alto APR com crescimento</span>
+                    </div>
+                </div>
+                <h4 style="color:var(--gold); margin:15px 0 10px;">💰 Alocação Recomendada</h4>
+                <div id="alocacaoLista"></div>
+            </div>
+
+            <div id="liquidityManualContent" style="display:none;">
+                <h4>📋 Selecione as pools e defina os percentuais</h4>
+                <div id="poolsManualLista"></div>
+                <div style="margin-top:10px;">
+                    <div id="resumoManual" style="font-size:12px; color:var(--text); margin-bottom:8px;">Total: 0%</div>
+                    <button class="btn-calc" onclick="salvarCarteiraManual()">💾 SALVAR CONFIGURAÇÃO</button>
+                </div>
+            </div>
+
+            <!-- Simulação de retorno -->
+            <div style="margin-top:20px; background:#0d151f; border-radius:16px; padding:16px;">
+                <h4 style="color:var(--gold); margin-bottom:12px;">🔮 Simulação de Retorno</h4>
+                <div class="grid-2">
+                    <div><label>Valor (USDC)</label><input type="number" id="simValor" value="1000" step="100"></div>
+                    <div><label>Período (dias)</label><input type="number" id="simDias" value="30" step="1"></div>
+                </div>
+                <button class="btn-calc" onclick="simularRetornoLiquidity()" style="margin-top:10px;">📈 SIMULAR RETORNO</button>
+                <div id="simResultado" style="margin-top:12px; font-size:13px; color:#c9d1d9;"></div>
+            </div>
+
+            <!-- Histórico dinâmico -->
+            <div style="margin-top:20px;">
+                <h4 style="color:var(--gold); margin-bottom:10px;">📜 Histórico de Regimes</h4>
+                <div class="regime-history-list" id="regimeHistoricoLista"></div>
+            </div>
+
+            <button class="copy-strategy-btn" onclick="copiarEstrategia()">📋 COPIAR ESTRATÉGIA</button>
+        </div>
+    </div>
+
+</div>
+</div>
+
+<script src="https://s3.tradingview.com/tv.js"></script>
+<script>
+// ========== VARIÁVEIS GLOBAIS ==========
+let price = 67728.12;
+let pricesHistory = [];
+let ema50 = 0;
+let isDesktop = false;
+let currentTF = "1";
+let activeWS = null;
+let alarmes = [];
+let modoOperacaoAtivo = false;
+let timeoutDescanso;
+let metalInterval = null;
+let mvrvData = { total: 1.43, sth: 0.90, lth: 1.43, regime: 'ACUMULAÇÃO', recomendacao: 'STH MVRV abaixo de 1 = capitulação. Zona de compra agressiva.' };
+let cicloData = { mvrv: 1.43, nupl: 0.23, sopr: 1.06, realizedPrice: 40000, rhodl: 2160, puell: 0.82 };
+let filtroNetworkAtual = 'todos';
+let filtroOportunidadeAtual = 'todos';
+let modoOrdenacao = 'apr';
+let colunaOrdenacao = 'apr';
+let ordemAsc = false;
+let poolsFiltradas = [];
+
+let poolsData = [
+    { pool: "USDT/USDC", network: "Solana", dex: "Raydium", tvl: 3000, ratio: "55/45", volume: 10000000, apr: 489.2, fee: 7.0, age: "2m", fee1h: 12.3, fee6h: 8.5, fee24h: 5.2, fee7d: 4.1, fee30d: 3.2, link: "https://raydium.io/liquidity/", varh: 2.1, var6h: -1.2, var24h: 5.3, var7d: 12.1, var30d: 22.4 },
+    { pool: "USDT/WBNB", network: "Bsc", dex: "PancakeSwap V3", tvl: 27200, ratio: "16/84", volume: 500000, apr: 403.9, fee: 7.7, age: "1m", fee1h: 8.7, fee6h: 6.2, fee24h: 4.5, fee7d: 3.8, fee30d: 2.9, link: "https://pancakeswap.finance/liquidity", varh: -0.5, var6h: 1.8, var24h: -3.2, var7d: 8.7, var30d: 15.3 },
+    { pool: "CONV/USDC", network: "Solana", dex: "Raydium", tvl: 278100, ratio: "87/13", volume: 2210000, apr: 340.5, fee: 23.0, age: "2mo", fee1h: 15.2, fee6h: 11.4, fee24h: 8.1, fee7d: 6.3, fee30d: 4.8, link: "https://raydium.io/liquidity/", varh: 3.4, var6h: 7.2, var24h: 12.5, var7d: 28.3, var30d: 45.6 },
+    { pool: "SOL/USDT", network: "Solana", dex: "Raydium", tvl: 3000, ratio: "55/45", volume: 10000000, apr: 349.0, fee: 7.0, age: "2m", fee1h: 12.3, fee6h: 8.5, fee24h: 5.2, fee7d: 4.1, fee30d: 3.2, link: "https://raydium.io/liquidity/", varh: 1.1, var6h: -0.8, var24h: 4.2, var7d: 9.8, var30d: 18.7 },
+    { pool: "SOL/WETH", network: "Ethereum", dex: "Uniswap V3", tvl: 1000, ratio: "91/9", volume: 3290000, apr: 295.2, fee: 7.3, age: "1mo", fee1h: 9.8, fee6h: 7.3, fee24h: 5.6, fee7d: 4.2, fee30d: 3.1, link: "https://app.uniswap.org/#/pools", varh: -2.3, var6h: -1.1, var24h: 2.8, var7d: -5.4, var30d: 11.2 },
+    { pool: "SOL/USDC", network: "Base", dex: "Aerodrome", tvl: 218500, ratio: "59/41", volume: 300000, apr: 290.1, fee: 18.3, age: "40d", fee1h: 18.5, fee6h: 14.2, fee24h: 10.8, fee7d: 7.9, fee30d: 5.6, link: "https://aerodrome.finance/liquidity", varh: 0.8, var6h: 2.4, var24h: 6.1, var7d: 14.3, var30d: 31.2 },
+    { pool: "USDC/WBTC", network: "Hyperliquid", dex: "Project X", tvl: 500000, ratio: "44/56", volume: 300000, apr: 265.6, fee: 12.7, age: "6mo", fee1h: 7.2, fee6h: 5.4, fee24h: 3.9, fee7d: 3.1, fee30d: 2.4, link: "https://hyperliquid.xyz", varh: -1.8, var6h: -3.2, var24h: -0.9, var7d: 4.5, var30d: 9.8 },
+    { pool: "TQQQ/USDC", network: "Solana", dex: "Raydium", tvl: 20500, ratio: "51/49", volume: 4280000, apr: 262.7, fee: 17.4, age: "17d", fee1h: 22.1, fee6h: 16.8, fee24h: 12.3, fee7d: 8.5, fee30d: 6.1, link: "https://raydium.io/liquidity/", varh: 4.5, var6h: 8.3, var24h: 15.7, var7d: 32.4, var30d: 58.9 },
+    { pool: "HYPE/USDC", network: "Solana", dex: "Orca", tvl: 72000, ratio: "55/45", volume: 5020000, apr: 222.3, fee: 14.2, age: "3mo", fee1h: 14.6, fee6h: 11.2, fee24h: 8.5, fee7d: 6.4, fee30d: 4.7, link: "https://www.orca.so/", varh: 1.2, var6h: 3.5, var24h: 7.8, var7d: 18.9, var30d: 35.4 },
+    { pool: "HYPE/eBTC", network: "Solana", dex: "Meteora DLMM", tvl: 22000, ratio: "80/20", volume: 10000000, apr: 209.8, fee: 7.8, age: "5mo", fee1h: 12.8, fee6h: 9.6, fee24h: 7.3, fee7d: 5.5, fee30d: 4.1, link: "https://app.meteora.ag/dlmm", varh: -0.3, var6h: 1.7, var24h: 4.4, var7d: 10.2, var30d: 24.6 },
+    { pool: "SOL/WETH", network: "Arbitrum", dex: "Uniswap V3", tvl: 128100, ratio: "63/37", volume: 10000000, apr: 190.8, fee: 6.4, age: "2y", fee1h: 6.8, fee6h: 5.1, fee24h: 3.7, fee7d: 2.9, fee30d: 2.2, link: "https://app.uniswap.org/#/pools", varh: 0.6, var6h: 1.2, var24h: 3.1, var7d: 7.8, var30d: 16.5 },
+    { pool: "SOL/WBTC", network: "Arbitrum", dex: "Uniswap V3", tvl: 4000, ratio: "79/21", volume: 10000000, apr: 179.9, fee: 10.2, age: "2y", fee1h: 8.4, fee6h: 6.4, fee24h: 4.8, fee7d: 3.7, fee30d: 2.8, link: "https://app.uniswap.org/#/pools", varh: -1.2, var6h: -2.1, var24h: 1.8, var7d: 5.3, var30d: 12.7 },
+    { pool: "WETH/USDC", network: "Base", dex: "Aerodrome", tvl: 371000, ratio: "75/27", volume: 300000, apr: 176.5, fee: 13.6, age: "1m", fee1h: 9.2, fee6h: 7.1, fee24h: 5.4, fee7d: 4.2, fee30d: 3.2, link: "https://aerodrome.finance/liquidity", varh: 2.3, var6h: 4.1, var24h: 8.9, var7d: 20.1, var30d: 38.7 },
+    { pool: "BTC/USDC", network: "Solana", dex: "Meteora DLMM", tvl: 850000, ratio: "52/48", volume: 15000000, apr: 158.3, fee: 4.5, age: "8mo", fee1h: 5.8, fee6h: 4.3, fee24h: 3.2, fee7d: 2.6, fee30d: 2.0, link: "https://app.meteora.ag/dlmm", varh: 0.4, var6h: 0.9, var24h: 2.3, var7d: 6.1, var30d: 14.2 },
+    { pool: "ETH/USDC", network: "Ethereum", dex: "Uniswap V3", tvl: 1200000, ratio: "48/52", volume: 25000000, apr: 142.7, fee: 5.0, age: "3y", fee1h: 4.9, fee6h: 3.7, fee24h: 2.8, fee7d: 2.3, fee30d: 1.8, link: "https://app.uniswap.org/#/pools", varh: -0.2, var6h: 0.5, var24h: 1.7, var7d: 4.8, var30d: 11.3 },
+];
+
+// ========== SCORE CALCULADO ==========
+function calcularScore(pool) {
+    const aprScore = Math.min(pool.apr / 5, 40);
+    const volRatio = pool.tvl > 0 ? Math.min((pool.volume / pool.tvl) * 10, 30) : 0;
+    const ageMap = { 'm': 5, 'd': 8, 'mo': 10, 'y': 15 };
+    let ageScore = 5;
+    for (const k in ageMap) { if (pool.age.includes(k)) { ageScore = ageMap[k]; break; } }
+    const feeScore = Math.min(pool.fee / 2, 15);
+    return Math.round(Math.min(aprScore + volRatio + ageScore + feeScore, 100));
+}
+
+// ========== OPORTUNIDADE BADGE ==========
+function calcularOportunidade(pool) {
+    const score = calcularScore(pool);
+    if (score >= 70) return { label: '🟢 Alta', cls: 'badge-alta' };
+    if (score >= 45) return { label: '🟡 Média', cls: 'badge-media' };
+    if (score >= 25) return { label: '🔴 Baixa', cls: 'badge-baixa' };
+    return { label: '⚪ Neutro', cls: 'badge-neutro' };
+}
+
+// ========== VARIAÇÃO COM COR ==========
+function varCell(v) {
+    if (v === undefined || v === null) return '<span class="var-neutral">—</span>';
+    const cls = v > 0 ? 'var-positive' : v < 0 ? 'var-negative' : 'var-neutral';
+    const sign = v > 0 ? '+' : '';
+    return `<span class="${cls}">${sign}${v.toFixed(1)}%</span>`;
+}
+
+// ========== FORMATAÇÃO ==========
+function fmt(n) {
+    if (n >= 1e6) return '$' + (n/1e6).toFixed(2) + 'M';
+    if (n >= 1e3) return '$' + (n/1e3).toFixed(1) + 'K';
+    return '$' + n.toFixed(0);
+}
+
+// ========== LOADING ==========
+function showLoading(id) { const el = document.getElementById(id); if(el) el.classList.add('visible'); }
+function hideLoading(id) { const el = document.getElementById(id); if(el) el.classList.remove('visible'); }
+function setRefreshLoading(id, on) {
+    const btn = document.getElementById(id);
+    if(!btn) return;
+    if(on) { btn.classList.add('btn-refresh-loading'); btn.disabled = true; }
+    else { btn.classList.remove('btn-refresh-loading'); btn.disabled = false; }
+}
+
+// ========== RENDER POOLS TABLE ==========
+function renderPoolsTable(data) {
+    const tbody = document.getElementById('poolsTableBody');
+    if (!tbody) return;
+    const periodo = document.getElementById('feePeriodSelect')?.value || 'fee24h';
+    const source = data || poolsFiltradas || poolsData;
+
+    if (source.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="16"><div class="empty-state"><div class="empty-icon">🔍</div><p>Nenhuma pool encontrada com os filtros aplicados.</p><button onclick="resetarFiltros()">↺ Limpar Filtros</button></div></td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = source.map((p, i) => {
+        const score = calcularScore(p);
+        const scoreColor = score >= 70 ? '#00ff88' : score >= 45 ? '#ffcc00' : '#ff3e3e';
+        const feeVal = p[periodo] ?? p.fee24h ?? '—';
+        const ratioA = parseInt(p.ratio) || 50;
+
+        const dexLinks = {
+            'Raydium': 'https://raydium.io/liquidity/',
+            'Orca': 'https://www.orca.so/',
+            'Meteora DLMM': 'https://app.meteora.ag/dlmm',
+            'Uniswap V3': 'https://app.uniswap.org/#/pools',
+            'PancakeSwap V3': 'https://pancakeswap.finance/liquidity',
+            'Aerodrome': 'https://aerodrome.finance/liquidity',
+            'Project X': 'https://hyperliquid.xyz',
+        };
+        const link = dexLinks[p.dex] || '#';
+
+        return `<tr>
+            <td style="font-weight:bold; color:white;">${p.pool}</td>
+            <td>${p.network}</td>
+            <td style="color:var(--accent);">${p.dex}</td>
+            <td>${fmt(p.tvl)}</td>
+            <td>
+                <div class="ratio-wrapper">
+                    <div class="ratio-bar"><span style="width:${ratioA}%"></span></div>
+                    <span style="font-size:10px; color:var(--text);">${p.ratio}</span>
+                    <div class="ratio-tooltip">${p.ratio.split('/')[0]}% Token A · ${p.ratio.split('/')[1]}% Token B</div>
+                </div>
+            </td>
+            <td>${fmt(p.volume)}</td>
+            <td class="apr-high">${p.apr.toFixed(1)}%</td>
+            <td>${varCell(p.varh)}</td>
+            <td>${varCell(p.var6h)}</td>
+            <td>${varCell(p.var24h)}</td>
+            <td>${varCell(p.var7d)}</td>
+            <td>${varCell(p.var30d)}</td>
+            <td>${p.fee.toFixed(1)}%</td>
+            <td>${p.age}</td>
+            <td>
+                <div class="score-tooltip-wrapper">
+                    <div class="score-bar-small"><div class="score-fill-small" style="width:${score}%; background:${scoreColor};"></div></div>
+                    <span style="font-weight:bold; color:${scoreColor};">${score}</span>
+                    <div class="score-tooltip-box">
+                        <strong>Score: ${score}/100</strong><br>
+                        APR (40%): ${Math.min(p.apr/5,40).toFixed(1)} pts<br>
+                        Vol/TVL (30%): ${Math.min((p.volume/p.tvl)*10,30).toFixed(1)} pts<br>
+                        Idade (15%): baseado em ${p.age}<br>
+                        Fee (15%): ${Math.min(p.fee/2,15).toFixed(1)} pts
+                    </div>
+                </div>
+            </td>
+            <td><a href="${link}" target="_blank" class="link-pool" title="Abrir pool na DEX">🔗</a></td>
+        </tr>`;
+    }).join('');
+}
+
+// ========== ATUALIZAR POOLS ==========
+function atualizarPoolsCompleto() {
+    setRefreshLoading('btnAtualizarPools', true);
+    showLoading('loadingPools');
+    setTimeout(() => {
+        poolsFiltradas = [...poolsData];
+        renderPoolsTable(poolsFiltradas);
+        hideLoading('loadingPools');
+        setRefreshLoading('btnAtualizarPools', false);
+        mostrarFeedbackFiltro(poolsFiltradas.length, poolsData.length);
+    }, 1200);
+}
+
+// ========== FILTROS ==========
+function aplicarFiltros() {
+    const tvlMin = parseFloat(document.getElementById('filtroTVL')?.value) || 0;
+    const volMin = parseFloat(document.getElementById('filtroVolume')?.value) || 0;
+    const aprMin = parseFloat(document.getElementById('filtroAPR')?.value) || 0;
+    poolsFiltradas = poolsData.filter(p => p.tvl >= tvlMin && p.volume >= volMin && p.apr >= aprMin);
+    renderPoolsTable(poolsFiltradas);
+    mostrarFeedbackFiltro(poolsFiltradas.length, poolsData.length);
+}
+
+function resetarFiltros() {
+    document.getElementById('filtroTVL').value = 0;
+    document.getElementById('filtroVolume').value = 0;
+    document.getElementById('filtroAPR').value = 0;
+    poolsFiltradas = [...poolsData];
+    renderPoolsTable(poolsFiltradas);
+    mostrarFeedbackFiltro(poolsFiltradas.length, poolsData.length);
+}
+
+function mostrarFeedbackFiltro(count, total) {
+    const el = document.getElementById('filtroResultadoInfo');
+    if (!el) return;
+    el.classList.add('visible');
+    el.textContent = `Exibindo ${count} de ${total} pools`;
+    setTimeout(() => el.classList.remove('visible'), 4000);
+}
+
+function filtrarPorPar() {
+    const q = document.getElementById('searchPairInput')?.value?.toLowerCase() || '';
+    const source = poolsData.filter(p => p.pool.toLowerCase().includes(q) || p.network.toLowerCase().includes(q) || p.dex.toLowerCase().includes(q));
+    renderPoolsTable(source);
+}
+
+function setModo(modo) {
+    modoOrdenacao = modo;
+    ['modoAutoBtn','modoManualBtn','modoAPRBtn'].forEach(id => document.getElementById(id)?.classList.remove('active'));
+    if (modo === 'auto') { document.getElementById('modoAutoBtn')?.classList.add('active'); poolsFiltradas = [...poolsData].sort((a,b) => calcularScore(b)-calcularScore(a)); }
+    else if (modo === 'manual') { document.getElementById('modoManualBtn')?.classList.add('active'); poolsFiltradas = [...poolsData]; }
+    else { document.getElementById('modoAPRBtn')?.classList.add('active'); poolsFiltradas = [...poolsData].sort((a,b) => b.apr-a.apr); }
+    renderPoolsTable(poolsFiltradas);
+}
+
+function ordenarPor(col) {
+    if (colunaOrdenacao === col) ordemAsc = !ordemAsc;
+    else { colunaOrdenacao = col; ordemAsc = false; }
+    const source = poolsFiltradas.length ? poolsFiltradas : poolsData;
+    source.sort((a,b) => {
+        let va = a[col], vb = b[col];
+        if (typeof va === 'string') va = parseFloat(va) || va;
+        if (typeof vb === 'string') vb = parseFloat(vb) || vb;
+        return ordemAsc ? (va > vb ? 1 : -1) : (va < vb ? 1 : -1);
+    });
+    renderPoolsTable(source);
+}
+
+// ========== POOLS ESTRATÉGICAS ==========
+function renderPoolsEstrategicas(data) {
+    const tbody = document.getElementById('poolsEstrategicasBody');
+    if (!tbody) return;
+    const source = data || poolsData;
+
+    let filtered = source;
+    if (filtroNetworkAtual !== 'todos') filtered = filtered.filter(p => p.network === filtroNetworkAtual);
+    if (filtroOportunidadeAtual !== 'todos') {
+        filtered = filtered.filter(p => {
+            const op = calcularOportunidade(p);
+            return op.label.toLowerCase().includes(filtroOportunidadeAtual);
+        });
+    }
+
+    document.getElementById('contadorEstrategicas').textContent = `${filtered.length} pools encontradas`;
+
+    if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="12"><div class="empty-state"><div class="empty-icon">🎯</div><p>Nenhuma pool encontrada com esses filtros.</p></div></td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = filtered.map(p => {
+        const op = calcularOportunidade(p);
+        const score = calcularScore(p);
+        const dexLinks = {
+            'Raydium': 'https://raydium.io/liquidity/',
+            'Orca': 'https://www.orca.so/',
+            'Meteora DLMM': 'https://app.meteora.ag/dlmm',
+            'Uniswap V3': 'https://app.uniswap.org/#/pools',
+            'PancakeSwap V3': 'https://pancakeswap.finance/liquidity',
+            'Aerodrome': 'https://aerodrome.finance/liquidity',
+            'Project X': 'https://hyperliquid.xyz',
+        };
+        const link = dexLinks[p.dex] || '#';
+        return `<tr>
+            <td style="font-weight:bold; color:white;">${p.pool}</td>
+            <td>${p.network}</td>
+            <td style="color:var(--accent);">${p.dex}</td>
+            <td>${fmt(p.tvl)}</td>
+            <td><div class="ratio-bar"><span style="width:${parseInt(p.ratio)||50}%"></span></div> ${p.ratio}</td>
+            <td>${fmt(p.volume)}</td>
+            <td class="apr-high">${p.apr.toFixed(1)}%</td>
+            <td>${(p.fee24h||p.fee).toFixed(1)}%</td>
+            <td>${p.fee.toFixed(1)}%</td>
+            <td>${p.age}</td>
+            <td><span class="badge-oportunidade ${op.cls}">${op.label}</span></td>
+            <td><a href="${link}" target="_blank" class="link-pool">🔗 Abrir</a></td>
+        </tr>`;
+    }).join('');
+}
+
+function atualizarPoolsEstrategicas() {
+    setRefreshLoading('btnAtualizarEstrategicas', true);
+    showLoading('loadingEstrategicas');
+    setTimeout(() => {
+        renderPoolsEstrategicas(poolsData);
+        hideLoading('loadingEstrategicas');
+        setRefreshLoading('btnAtualizarEstrategicas', false);
+    }, 1000);
+}
+
+function filtrarEstrategicas(network, btn) {
+    filtroNetworkAtual = network;
+    document.querySelectorAll('.estrategicas-filters .estrategica-filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderPoolsEstrategicas(poolsData);
+}
+
+function filtrarOportunidade(op, btn) {
+    filtroOportunidadeAtual = op;
+    document.querySelectorAll('#filtroOportunidadeRow .estrategica-filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderPoolsEstrategicas(poolsData);
+}
+
+// ========== NOTÍCIAS ==========
+const noticiasMock = [
+    { title: "Bitcoin atinge máxima de 3 meses após dados do Fed", source: "CoinTelegraph", tag: "BTC", time: "2h atrás", url: "https://cointelegraph.com.br/" },
+    { title: "Ethereum supera $3.500 com acúmulo institucional", source: "CoinDesk", tag: "ETH", time: "4h atrás", url: "https://www.coindesk.com/" },
+    { title: "Solana lidera volume em DEXs pela terceira semana consecutiva", source: "Livecoins", tag: "SOL", time: "6h atrás", url: "https://livecoins.com.br/" },
+    { title: "Hyperliquid registra recorde de volume em futuros perpétuos", source: "The Block", tag: "HYPE", time: "8h atrás", url: "https://www.theblock.co/" },
+    { title: "Pools de liquidez concentrada crescem 40% em TVL no trimestre", source: "CoinTelegraph BR", tag: "DeFi", time: "10h atrás", url: "https://cointelegraph.com.br/" },
+    { title: "Fed mantém juros: impacto no mercado cripto é neutro a positivo", source: "CoinDesk", tag: "MACRO", time: "12h atrás", url: "https://www.coindesk.com/" },
+];
+
+function carregarNoticias() {
+    setRefreshLoading('btnAtualizarNoticias', true);
+    const lista = document.getElementById('noticiasList');
+    if (!lista) return;
+    document.getElementById('noticiasLoading').style.display = 'block';
+    lista.innerHTML = '';
+    setTimeout(() => {
+        document.getElementById('noticiasLoading').style.display = 'none';
+        setRefreshLoading('btnAtualizarNoticias', false);
+        lista.innerHTML = noticiasMock.map((n, i) => `
+            <a class="news-live-card" href="${n.url}" target="_blank">
+                <div class="news-source">${i === 0 ? '<span class="news-destaque-chip">NOVO</span>' : ''}${n.source}</div>
+                <div class="news-title">${n.title}</div>
+                <div class="news-meta">
+                    <span>🕐 ${n.time}</span>
+                    <span class="news-tag">#${n.tag}</span>
+                </div>
+            </a>
+        `).join('');
+    }, 1000);
+}
+
+// ========== MVRV ==========
+function atualizarMVRV() {
+    setRefreshLoading('btnAtualizarMVRV', true);
+    setTimeout(() => {
+        const total = mvrvData.total;
+        const sth = mvrvData.sth;
+        const lth = mvrvData.lth;
+
+        document.getElementById('mvrvValue').textContent = total.toFixed(2);
+        document.getElementById('sthValue').textContent = sth.toFixed(2);
+        if (document.getElementById('lthValue')) document.getElementById('lthValue').textContent = lth.toFixed(2);
+
+        const pct = Math.min((total / 4) * 100, 100);
+        document.getElementById('mvrvFill').style.width = pct + '%';
+        const sthPct = Math.min((sth / 2) * 100, 100);
+        document.getElementById('sthFill').style.width = sthPct + '%';
+
+        // Gauge
+        const gaugePos = Math.min(Math.max((total / 4) * 100, 2), 98);
+        const marker = document.getElementById('mvrvGaugeMarker');
+        if (marker) marker.style.left = gaugePos + '%';
+
+        document.getElementById('regimeText').textContent = mvrvData.regime;
+        if (document.getElementById('mvrvRecomendacaoText')) {
+            document.getElementById('mvrvRecomendacaoText').textContent = mvrvData.recomendacao;
+        }
+
+        // Histórico dinâmico
+        const historico = gerarHistoricoMVRV();
+        const listaEl = document.getElementById('mvrvHistoricoLista');
+        if (listaEl) {
+            listaEl.innerHTML = historico.map(h => `
+                <div class="mvrv-history-item">
+                    <span class="mvrv-data">${h.data}</span>
+                    <span class="mvrv-val" style="color:${h.total < 1.5 ? '#00ff88' : h.total < 2.5 ? '#ffcc00' : '#ff3e3e'}">${h.total}</span>
+                    <span class="mvrv-regime-badge ${h.total < 1.5 ? 'mvrv-acumulacao' : h.total < 2.5 ? 'mvrv-neutro' : 'mvrv-topo'}">${h.regime}</span>
+                </div>
+            `).join('');
+        }
+
+        setRefreshLoading('btnAtualizarMVRV', false);
+    }, 800);
+}
+
+function gerarHistoricoMVRV() {
+    const hoje = new Date();
+    const base = mvrvData.total;
+    return Array.from({length: 7}, (_, i) => {
+        const d = new Date(hoje); d.setDate(d.getDate() - i);
+        const val = +(base + (Math.random() * 0.1 - 0.05) * (i+1)).toFixed(2);
+        const regime = val < 1.5 ? 'ACUMULAÇÃO' : val < 2.5 ? 'NEUTRO' : 'TOPO';
+        return { data: d.toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'}), total: val, regime };
+    });
+}
+
+// ========== INDICADORES DE CICLO ==========
+function calcularScoreCiclo() {
+    const mvrv = parseFloat(document.getElementById('inputMVRV')?.value) || 1.43;
+    const nupl = parseFloat(document.getElementById('inputNUPL')?.value) || 0.23;
+    const sopr = parseFloat(document.getElementById('inputSOPR')?.value) || 1.06;
+    const rp = parseFloat(document.getElementById('inputRealizedPrice')?.value) || 40000;
+    const rhodl = parseFloat(document.getElementById('inputRHODL')?.value) || 2160;
+    const puell = parseFloat(document.getElementById('inputPuell')?.value) || 0.82;
+
+    // Cada indicador gera 0-100 onde >50 = sinal de topo
+    const scores = [
+        Math.min(Math.max((mvrv / 4) * 100, 0), 100),
+        Math.min(Math.max(((nupl + 0.2) / 1.2) * 100, 0), 100),
+        Math.min(Math.max(((sopr - 0.8) / 0.6) * 100, 0), 100),
+        Math.min(Math.max(((price / rp) * 50), 0), 100),
+        Math.min(Math.max((rhodl / 6000) * 100, 0), 100),
+        Math.min(Math.max((puell / 4) * 100, 0), 100),
+    ];
+    const score = Math.round(scores.reduce((a,b) => a+b, 0) / scores.length);
+
+    // Gauge
+    const gaugePos = Math.min(Math.max(score, 2), 98);
+    const cicloMarker = document.getElementById('cicloGaugeMarker');
+    if (cicloMarker) cicloMarker.style.left = gaugePos + '%';
+
+    const semaforo = document.getElementById('semaforoIcon');
+    const sinalTexto = document.getElementById('sinalTexto');
+    const scoreCiclo = document.getElementById('scoreCiclo');
+    const desc = document.getElementById('scoreCicloDesc');
+
+    scoreCiclo?.classList.add('score-blink');
+    setTimeout(() => scoreCiclo?.classList.remove('score-blink'), 600);
+
+    if (score <= 30) {
+        semaforo?.className = 'semaforo semaforo-verde';
+        if (sinalTexto) sinalTexto.textContent = 'FUNDO';
+        if (sinalTexto) sinalTexto.style.color = '#00ff88';
+        if (desc) desc.textContent = 'Indicadores apontam região de fundo histórico. Excelente zona de acumulação.';
+    } else if (score <= 50) {
+        semaforo?.className = 'semaforo semaforo-verde';
+        if (sinalTexto) sinalTexto.textContent = 'ACUMULAÇÃO';
+        if (sinalTexto) sinalTexto.style.color = '#00ff88';
+        if (desc) desc.textContent = 'Zona favorável de entrada. Acumule posições gradualmente.';
+    } else if (score <= 70) {
+        semaforo?.className = 'semaforo semaforo-amarelo';
+        if (sinalTexto) sinalTexto.textContent = 'NEUTRO';
+        if (sinalTexto) sinalTexto.style.color = '#ffcc00';
+        if (desc) desc.textContent = 'Mercado em equilíbrio. Mantenha posições e monitore.';
+    } else {
+        semaforo?.className = 'semaforo semaforo-vermelho';
+        if (sinalTexto) sinalTexto.textContent = 'TOPO';
+        if (sinalTexto) sinalTexto.style.color = '#ff3e3e';
+        if (desc) desc.textContent = 'Zona de risco elevado. Considere realizar lucros parciais.';
+    }
+    if (scoreCiclo) scoreCiclo.textContent = score;
+
+    // Status individual
+    atualizarStatusIndicador('statusMVRV', mvrv, mvrv < 1 ? '🟢 Barato' : mvrv < 2.5 ? '🟡 Neutro' : '🔴 Caro', mvrv < 1 ? '#00ff88' : mvrv < 2.5 ? '#ffcc00' : '#ff3e3e');
+    atualizarStatusIndicador('statusNUPL', nupl, nupl < 0.25 ? '🟢 Capitulação' : nupl < 0.5 ? '🟡 Esperança' : '🔴 Euforia', nupl < 0.25 ? '#00ff88' : nupl < 0.5 ? '#ffcc00' : '#ff3e3e');
+    atualizarStatusIndicador('statusSOPR', sopr, sopr < 1 ? '🟢 Prejuízo (compra)' : sopr < 1.05 ? '🟡 Neutro' : '🔴 Lucro (venda)', sopr < 1 ? '#00ff88' : sopr < 1.05 ? '#ffcc00' : '#ff3e3e');
+    atualizarStatusIndicador('statusRHODL', rhodl, rhodl < 1000 ? '🟢 Acumulação' : rhodl < 5000 ? '🟡 Neutro' : '🔴 Topo', rhodl < 1000 ? '#00ff88' : rhodl < 5000 ? '#ffcc00' : '#ff3e3e');
+    atualizarStatusIndicador('statusPuell', puell, puell < 0.5 ? '🟢 Fundo' : puell < 2 ? '🟡 Neutro' : '🔴 Topo', puell < 0.5 ? '#00ff88' : puell < 2 ? '#ffcc00' : '#ff3e3e');
+}
+
+function atualizarStatusIndicador(id, val, label, color) {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = `<div class="indicador-dot" style="background:${color};"></div><span class="indicador-label-val" style="color:${color};">${label}</span>`;
+}
+
+function autoFetchIndicadores() {
+    setRefreshLoading('btnFetchIndicadores', true);
+    setTimeout(() => {
+        // Usar dados do mvrvData já carregados
+        const el = id => document.getElementById(id);
+        if(el('inputMVRV')) el('inputMVRV').value = mvrvData.total;
+        if(el('inputNUPL')) el('inputNUPL').value = '0.28';
+        if(el('inputSOPR')) el('inputSOPR').value = '1.02';
+        if(el('inputRealizedPrice')) el('inputRealizedPrice').value = '40000';
+        if(el('inputRHODL')) el('inputRHODL').value = '2160';
+        if(el('inputPuell')) el('inputPuell').value = '0.82';
+        calcularScoreCiclo();
+        setRefreshLoading('btnFetchIndicadores', false);
+    }, 1200);
+}
+
+// ========== DCA CALCULADORA ==========
+function calcularDCA() {
+    const capital = parseFloat(document.getElementById('dcaCapital')?.value) || 10000;
+    const precoAtual = parseFloat(document.getElementById('dcaPreco')?.value) || 67000;
+    const niveis = [
+        { queda: 3, compra: 10 }, { queda: 6, compra: 20 },
+        { queda: 10, compra: 30 }, { queda: 15, compra: 20 }
+    ];
+    const el = document.getElementById('dcaResultado');
+    if (!el) return;
+    el.innerHTML = niveis.map(n => {
+        const preco = (precoAtual * (1 - n.queda/100)).toFixed(0);
+        const valor = (capital * n.compra / 100).toFixed(2);
+        const btc = (valor / preco).toFixed(6);
+        return `<div class="dca-line">
+            <span>📉 -${n.queda}% → $${Number(preco).toLocaleString('pt-BR')}</span>
+            <span style="color:var(--green);">${n.compra}% = <strong>$${valor}</strong> (${btc} BTC)</span>
+        </div>`;
+    }).join('') + `
+        <div class="dca-line" style="margin-top:8px; padding-top:8px; border-top:1px solid #3d4d62;">
+            <span style="color:var(--text);">💰 Total alocado para DCA:</span>
+            <span style="color:var(--gold); font-weight:bold;">$${(capital * 0.8).toFixed(2)} (80%)</span>
+        </div>`;
+}
+
+// ========== ALOCAÇÃO DINÂMICA ==========
+const alocacaoConfig = [
+    { nome: '📊 LP Principal (SOL/USDC)', pct: 50, cor: '#00ff88' },
+    { nome: '📊 LP Secundária (BTC/USDC)', pct: 25, cor: '#2f81f7' },
+    { nome: '💵 Caixa USDC', pct: 25, cor: '#ffcc00' },
+];
+
+function calcularAlocacao() {
+    const capital = parseFloat(document.getElementById('alocacaoCapital')?.value) || 10000;
+    const el = document.getElementById('alocacaoLinhas');
+    const totalEl = document.getElementById('alocacaoTotal');
+    if (!el) return;
+    let totalPct = 0;
+    alocacaoConfig.forEach((a, i) => {
+        const inp = document.getElementById('alocacaoPerc' + i);
+        if (inp) a.pct = parseFloat(inp.value) || a.pct;
+        totalPct += a.pct;
+    });
+    el.innerHTML = alocacaoConfig.map((a, i) => {
+        const valor = (capital * a.pct / 100).toFixed(2);
+        return `<div class="alocacao-linha">
+            <span class="alocacao-nome">${a.nome}</span>
+            <input type="number" id="alocacaoPerc${i}" class="alocacao-perc-input" value="${a.pct}" min="0" max="100" oninput="calcularAlocacao()">
+            <span class="alocacao-valor">$${Number(valor).toLocaleString('pt-BR')}</span>
+        </div>`;
+    }).join('');
+    if (totalEl) {
+        const ok = Math.abs(totalPct - 100) < 1;
+        totalEl.innerHTML = `Total: <strong style="color:${ok?'#00ff88':'#ff3e3e'}">${totalPct}%</strong> ${ok ? '✅' : '⚠️ Ajuste para 100%'}`;
+    }
+}
+
+// ========== STRATEGY ROUTER ==========
+function calcularRouter() {
+    const regime = document.getElementById('routerRegime')?.value;
+    const mvrv = parseFloat(document.getElementById('routerMVRV')?.value) || 1.43;
+    const el = document.getElementById('routerResultado');
+    if (!el) return;
+
+    const strategies = {
+        trend: { icon: '📈', title: 'Modo Tendência', estrategias: ['Market Making Adaptativo', 'Liquidez Direcional'], acao: 'Rode LP com range assimétrico na direção da tendência.' },
+        volatile: { icon: '⚡', title: 'Modo Volátil', estrategias: ['Gamma Scalping', 'Stop Loss Inteligente'], acao: 'Use hedge via spot e remova LP em quedas bruscas (> 8%).' },
+        sideways: { icon: '🟡', title: 'Modo Lateral', estrategias: ['Fee Harvesting', 'Multi-Pool Optimization'], acao: 'Maximize taxas com range estreito e diversifique em várias pools.' },
+        crash: { icon: '🔴', title: 'Modo Crash', estrategias: ['Stable LP', 'DCA Inteligente'], acao: 'Mova tudo para USDC/USDT. Ative DCA comprando quedas.' },
+        bull: { icon: '🚀', title: 'Modo Bull', estrategias: ['Liquidity Sniping', 'Rebalanceamento por Delta'], acao: 'Entre em pools de alto APR e rebalanceie a cada +10%.' },
+    };
+
+    const mvrvNote = mvrv < 1 ? '🟢 MVRV em fundo — aumente exposição.' : mvrv < 2 ? '🟡 MVRV neutro — neutro.' : '🔴 MVRV em zona de topo — reduza risco.';
+    const s = strategies[regime] || strategies.sideways;
+
+    el.innerHTML = `
+        <div style="font-size:20px; margin-bottom:8px;">${s.icon} <strong>${s.title}</strong></div>
+        <div style="font-size:12px; color:var(--text); margin-bottom:10px;">Estratégias ativas: <strong style="color:var(--green);">${s.estrategias.join(' + ')}</strong></div>
+        <div style="font-size:12px; background:#161b22; padding:10px; border-radius:10px; margin-bottom:8px;">${s.acao}</div>
+        <div style="font-size:11px; color:${mvrv < 1 ? '#00ff88' : mvrv < 2 ? '#ffcc00' : '#ff3e3e'};">${mvrvNote}</div>
+    `;
+}
+
+// ========== AUTO LIQUIDITY ==========
+function atualizarAPRsAutoLiquidity() {
+    setRefreshLoading('btnAtualizarAPRs', true);
+    setTimeout(() => {
+        const regime = mvrvData.regime;
+        document.getElementById('liquidityRegime').textContent = regime;
+        const estrategiaMap = { 'ACUMULAÇÃO': 'Alto APR com crescimento', 'NEUTRO': 'APR moderado + Stable', 'TOPO': 'Foco em Stable/USDC' };
+        document.getElementById('liquidityStrategy').textContent = estrategiaMap[regime] || 'Balanceada';
+        renderAlocacaoLiquidity(regime);
+        renderRegimeHistorico();
+        setRefreshLoading('btnAtualizarAPRs', false);
+    }, 900);
+}
+
+function renderAlocacaoLiquidity(regime) {
+    const el = document.getElementById('alocacaoLista');
+    if (!el) return;
+    const configs = {
+        'ACUMULAÇÃO': [
+            { pool: 'HYPE/USDC (Orca)', apr: 222.3, pct: 40, cor: '#00ff88' },
+            { pool: 'SOL/USDC (Raydium)', apr: 349.0, pct: 30, cor: '#2f81f7' },
+            { pool: 'BTC/USDC (Meteora)', apr: 158.3, pct: 20, cor: '#ffcc00' },
+            { pool: '💵 Caixa USDC', apr: 0, pct: 10, cor: '#ff9900' },
+        ],
+        'NEUTRO': [
+            { pool: 'ETH/USDC (Uniswap)', apr: 142.7, pct: 30, cor: '#2f81f7' },
+            { pool: 'BTC/USDC (Meteora)', apr: 158.3, pct: 30, cor: '#ffcc00' },
+            { pool: '💵 Caixa USDC', apr: 0, pct: 40, cor: '#ff9900' },
+        ],
+        'TOPO': [
+            { pool: 'USDT/USDC (Raydium)', apr: 489.2, pct: 20, cor: '#00ff88' },
+            { pool: '💵 Caixa USDC', apr: 0, pct: 80, cor: '#ff9900' },
+        ],
+    };
+    const config = configs[regime] || configs['NEUTRO'];
+    el.innerHTML = config.map(c => `
+        <div class="alocacao-item">
+            <span class="alocacao-nome">${c.pool}</span>
+            <span>${c.apr > 0 ? `<span style="color:#00ff88; font-size:11px;">${c.apr}% APR</span>` : '<span style="color:var(--text); font-size:11px;">estável</span>'}</span>
+            <span class="alocacao-percent" style="color:${c.cor};">${c.pct}%</span>
+        </div>
+    `).join('');
+}
+
+function simularRetornoLiquidity() {
+    const valor = parseFloat(document.getElementById('simValor')?.value) || 1000;
+    const dias = parseFloat(document.getElementById('simDias')?.value) || 30;
+    const aprMedio = 220;
+    const retorno = valor * (aprMedio / 100) * (dias / 365);
+    const total = valor + retorno;
+    const el = document.getElementById('simResultado');
+    if (el) el.innerHTML = `
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-top:10px;">
+            <div style="text-align:center; background:#0d1117; border-radius:12px; padding:12px;">
+                <div style="font-size:10px; color:var(--text);">APR MÉDIO</div>
+                <div style="font-size:20px; font-weight:bold; color:var(--green);">${aprMedio}%</div>
+            </div>
+            <div style="text-align:center; background:#0d1117; border-radius:12px; padding:12px;">
+                <div style="font-size:10px; color:var(--text);">RETORNO</div>
+                <div style="font-size:20px; font-weight:bold; color:var(--green);">$${retorno.toFixed(2)}</div>
+            </div>
+            <div style="text-align:center; background:#0d1117; border-radius:12px; padding:12px;">
+                <div style="font-size:10px; color:var(--text);">TOTAL</div>
+                <div style="font-size:20px; font-weight:bold; color:var(--gold);">$${total.toFixed(2)}</div>
+            </div>
+        </div>
+        <div style="font-size:10px; color:var(--text); margin-top:10px;">⚠️ Estimativa baseada no APR médio atual. Retornos reais variam.</div>
+    `;
+}
+
+function renderRegimeHistorico() {
+    const el = document.getElementById('regimeHistoricoLista');
+    if (!el) return;
+    const hoje = new Date();
+    const historico = gerarHistoricoMVRV();
+    el.innerHTML = historico.map((h, i) => {
+        const estratMap = { 'ACUMULAÇÃO': 'Alto APR + crescimento', 'NEUTRO': 'Balanceada', 'TOPO': 'Stable focus' };
+        const cor = h.regime === 'ACUMULAÇÃO' ? '#00ff88' : h.regime === 'NEUTRO' ? '#ffcc00' : '#ff3e3e';
+        return `<div class="regime-history-item">
+            <span class="regime-history-date">📅 ${h.data}</span>
+            <span class="regime-history-regime" style="color:${cor};">${h.regime}</span>
+            <span class="regime-history-estrategia">${estratMap[h.regime]||'—'}</span>
+        </div>`;
+    }).join('');
+}
+
+function copiarEstrategia() {
+    const regime = mvrvData.regime;
+    const texto = `📊 ESTRATÉGIA AUTO LIQUIDITY\nRegime: ${regime}\nData: ${new Date().toLocaleDateString('pt-BR')}\n\nGerada pelo Mestre do Scalping Pro`;
+    navigator.clipboard.writeText(texto).then(() => alert('✅ Estratégia copiada!')).catch(() => alert('Copie manualmente'));
+}
+
+function setModoLiquidity(modo) {
+    document.getElementById('modoAutoLiquidityBtn').classList.toggle('active', modo === 'auto');
+    document.getElementById('modoManualLiquidityBtn').classList.toggle('active', modo === 'manual');
+    document.getElementById('liquidityAutoContent').style.display = modo === 'auto' ? 'block' : 'none';
+    document.getElementById('liquidityManualContent').style.display = modo === 'manual' ? 'block' : 'none';
+}
+
+// ========== ROBÔ ==========
+function simularRobotLiquidez() {
+    const amount = parseFloat(document.getElementById('robotAmount')?.value) || 1000;
+    const range = document.getElementById('robotRangeSelect')?.value || '±10%';
+    const autoAdj = document.getElementById('robotAutoAdjust')?.value || 'ON';
+    const crash = document.getElementById('robotCrash')?.value || 'OFF';
+    const log = document.getElementById('robotLog');
+    const res = document.getElementById('robotResultado');
+    if (!log) return;
+
+    const rangeNum = parseInt(range.replace('±','').replace('%','')) / 100;
+    const aprSim = 150 + Math.random() * 200;
+    const retorno = amount * (aprSim/100) * (30/365);
+    const logs = [
+        `[Bot] ✅ Iniciando simulação — ${new Date().toLocaleTimeString('pt-BR')}`,
+        `[Bot] 💰 Capital: $${amount} | Range: ${range} | Auto-ajuste: ${autoAdj}`,
+        `[Bot] 📊 Analisando regime MVRV: ${mvrvData.regime}`,
+        `[Bot] 🎯 Pool selecionada: SOL/USDC (Raydium)`,
+        `[Bot] 📈 APR simulado: ${aprSim.toFixed(1)}%`,
+        `[Bot] 🔄 Liquidez adicionada com range ${range}`,
+        crash === 'ON' ? '[Bot] 🚨 Modo Crash ATIVO — monitorando queda > 8%' : '[Bot] ℹ️ Modo Crash desativado',
+        `[Bot] ✅ Simulação concluída. Retorno estimado 30d: $${retorno.toFixed(2)}`,
+    ];
+
+    log.innerHTML = '';
+    let i = 0;
+    const interval = setInterval(() => {
+        if (i < logs.length) { log.innerHTML += logs[i] + '<br>'; log.scrollTop = log.scrollHeight; i++; }
+        else { clearInterval(interval); }
+    }, 300);
+
+    setTimeout(() => {
+        if (res) res.innerHTML = `
+            <strong style="color:var(--green);">📊 Resultado da Simulação</strong><br>
+            💰 Capital: $${amount}<br>
+            📈 APR estimado: ${aprSim.toFixed(1)}%<br>
+            📅 Retorno (30d): <strong style="color:var(--green);">$${retorno.toFixed(2)}</strong><br>
+            🎯 Regime: ${mvrvData.regime}
+        `;
+    }, 2800);
+}
+
+// ========== ATUALIZAR TUDO ==========
+function atualizarTudo() {
+    atualizarMVRV();
+    setTimeout(calcularScoreCiclo, 200);
+    setTimeout(carregarNoticias, 400);
+    setTimeout(calcularRouter, 600);
+    setTimeout(calcularDCA, 800);
+    setTimeout(calcularAlocacao, 1000);
+}
+
+// ========== TABS ==========
+function switchTab(tab) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    const tabEl = document.getElementById(tab + 'Tab');
+    if (tabEl) tabEl.classList.add('active');
+    event.currentTarget.classList.add('active');
+    if (tab === 'pools' && document.getElementById('poolsTableBody')?.querySelector('.empty-state')) atualizarPoolsCompleto();
+    if (tab === 'poolsEstrategicas' && document.getElementById('poolsEstrategicasBody')?.querySelector('.empty-state')) atualizarPoolsEstrategicas();
+    if (tab === 'news') carregarNoticias();
+    if (tab === 'mvrv') atualizarMVRV();
+    if (tab === 'liquidity') { atualizarAPRsAutoLiquidity(); renderRegimeHistorico(); }
+    if (tab === 'strategies') { calcularRouter(); calcularDCA(); calcularAlocacao(); }
+    if (tab === 'ciclo') calcularScoreCiclo();
+}
+
+// ========== MODAL OPEN/CLOSE ==========
+function openPoolsModal() {
+    const m = document.getElementById('poolsModal');
+    m.style.display = 'flex';
+    setTimeout(() => {
+        atualizarMVRV();
+        calcularScoreCiclo();
+        calcularRouter();
+        calcularDCA();
+        calcularAlocacao();
+        renderRegimeHistorico();
+    }, 200);
+}
+
+function closePoolsModal() {
+    document.getElementById('poolsModal').style.display = 'none';
+}
+
+function fecharModal(id) { document.getElementById(id).style.display = 'none'; }
+function abrirSubmodal(id) { const el = document.getElementById(id); el.style.display = 'flex'; }
+function fecharSubmodal(id) { document.getElementById(id).style.display = 'none'; }
+
+function openPasswordModal() { document.getElementById('passwordModal').style.display = 'flex'; }
+function openDonationModal() { document.getElementById('donationModal').style.display = 'flex'; }
+
+function checkPassword() {
+    const pass = document.getElementById('passInput')?.value;
+    if (pass === '123456789' || pass === 'scalping') {
+        fecharModal('passwordModal');
+        document.getElementById('robotModal').style.display = 'flex';
+    } else {
+        alert('Senha incorreta');
+    }
+}
+
+// ========== CALCULADORA (página principal - intocada) ==========
+function calc() {
+    const capital = parseFloat(document.getElementById('capital').value);
+    const lev = parseFloat(document.getElementById('lev').value);
+    const tpP = parseFloat(document.getElementById('tpP').value);
+    const slP = parseFloat(document.getElementById('slP').value);
+    const pos = capital * lev;
+    const tp = price * (1 + tpP/100);
+    const sl = price * (1 - slP/100);
+    document.getElementById('resTP').textContent = `$${tp.toFixed(2)} (lucro: $${(pos * tpP/100).toFixed(2)})`;
+    document.getElementById('resSL').textContent = `$${sl.toFixed(2)} (perda: $${(pos * slP/100).toFixed(2)})`;
+    document.getElementById('results').style.display = 'block';
+}
+
+function copyText(t) {
+    navigator.clipboard.writeText(t).then(() => { }).catch(() => { });
+}
+
+function toggleMode() {
+    isDesktop = !isDesktop;
+    document.getElementById('mainCard').classList.toggle('desktop-mode', isDesktop);
+}
+
+function setTF(tf, btn) {
+    currentTF = tf;
+    document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+}
+
+function adicionarAlarme() {
+    const val = parseFloat(document.getElementById('alarmePreco').value);
+    if (!val) return;
+    alarmes.push(val);
+    renderAlarmes();
+    document.getElementById('alarmePreco').value = '';
+}
+
+function renderAlarmes() {
+    const lista = document.getElementById('alarmeLista');
+    if (!alarmes.length) { lista.innerHTML = '<div style="color: var(--text); text-align: center; padding: 10px;">Nenhum alarme definido</div>'; return; }
+    lista.innerHTML = alarmes.map((a, i) => `<div class="alarme-item"><span>$${a.toLocaleString('pt-BR')}</span><button class="alarme-remover" onclick="removerAlarme(${i})">✕</button></div>`).join('');
+}
+
+function removerAlarme(i) { alarmes.splice(i, 1); renderAlarmes(); }
+
+function onSymbolChange() { }
+function connectHyperliquid() { document.getElementById('apiConsole').textContent = '[API] Conectando...'; setTimeout(() => { document.getElementById('apiConsole').textContent = '[API] Conexão simulada com sucesso'; document.getElementById('robotConexaoStatus').textContent = '● Conectado (Demo)'; document.getElementById('robotConexaoStatus').style.color = '#00ff88'; }, 1500); }
+function placeRealOrder() { alert('⚠️ Função de ordem real apenas em ambiente local com chave privada configurada.'); }
+function simularBotLiquidez() { simularRobotLiquidez(); }
+function salvarCarteiraManual() { alert('✅ Carteira salva!'); }
+function atualizarTodosIndicadores() { atualizarTudo(); }
+function atualizarCalendario() { setRefreshLoading('btnAtualizarNoticias', true); setTimeout(() => setRefreshLoading('btnAtualizarNoticias', false), 800); }
+function atualizarPoolsEstrategicasAlias() { atualizarPoolsEstrategicas(); }
+
+// Inicialização
+window.addEventListener('load', () => {
+    calcularScoreCiclo();
+    calcularRouter();
+    calcularDCA();
+    calcularAlocacao();
+
+    // Regime no tab estratégias
+    const el = document.getElementById('estratRegime');
+    if (el) el.textContent = mvrvData.regime;
+    const desc = document.getElementById('estratRecomendacaoTexto');
+    if (desc) desc.textContent = mvrvData.recomendacao;
+
+    // TradingView chart
+    if (typeof TradingView !== 'undefined') {
+        new TradingView.widget({
+            container_id: 'chart_container',
+            symbol: 'BINANCE:BTCUSDT',
+            interval: '1',
+            theme: 'dark',
+            style: '1',
+            locale: 'br',
+            width: '100%',
+            height: '100%',
+            hide_side_toolbar: true,
+            allow_symbol_change: false,
+        });
+    }
+});
+</script>
+</body>
+</html>
