@@ -1,312 +1,184 @@
-# ✅ Correção: Apenas a aba "🌊 Top Pools" (Dados de Mercado)
+# 🔧 Site Travado: Diagnóstico e Correção Rápida
 
-Entendido! Vou corrigir **somente** a primeira aba do modal "Dados de Mercado", mantendo todo o resto do seu site intacto.
-
----
-
-## 🔧 Substitua APENAS este bloco no seu código:
-
-### 1️⃣ HTML da aba "Top Pools" (dentro do `#poolsModal`):
-
-```html
-<!-- ABA TOP POOLS (CORRIGIDA) -->
-<div id="poolsTab" class="tab-content active">
-    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
-        <input type="text" id="searchPairInput" class="search-pair-input" style="flex:1;" 
-               placeholder="🔍 Buscar par (ex: WBTC, SOL, ETH, BRL)..." 
-               onkeyup="filtrarPorPar()">
-        <button class="btn-atualizar" onclick="atualizarPoolsCompleto()" style="margin:0;">🔄 Atualizar</button>
-    </div>
-    
-    <!-- Categorias -->
-    <div class="categories-grid" id="categoriesContainer"></div>
-    
-    <div class="warning-high-apr">⚠️ Os valores de APR são atualizados dinamicamente. Sempre analise volume e liquidez.</div>
-    
-    <!-- Modo de exibição -->
-    <div class="mode-toggle">
-        <button id="modoAutoBtn" class="mode-btn" onclick="setModo('auto')">🤖 Automático (Score)</button>
-        <button id="modoManualBtn" class="mode-btn" onclick="setModo('manual')">👆 Manual</button>
-        <button id="modoAPRBtn" class="mode-btn apr-high active" onclick="setModo('apr')">🔥 APR altos</button>
-    </div>
-    
-    <!-- Filtros -->
-    <div class="filter-row">
-        <div class="filter-item"><label>TVL mínimo ($)</label><input type="number" id="filtroTVL" placeholder="ex: 10000" value="0" step="1000"></div>
-        <div class="filter-item"><label>Volume mínimo ($)</label><input type="number" id="filtroVolume" placeholder="ex: 5000" value="0" step="1000"></div>
-        <div class="filter-item"><label>APR mínimo (%)</label><input type="number" id="filtroAPR" placeholder="ex: 100" value="0" step="10"></div>
-        <button class="btn-filter" onclick="aplicarFiltros()">Aplicar</button>
-    </div>
-    
-    <!-- Tabela -->
-    <div class="table-wrapper">
-        <table class="pools-table" id="poolsTable">
-            <thead>
-                <tr>
-                    <th onclick="ordenarPor('pool')">Pool</th>
-                    <th onclick="ordenarPor('network')">Network</th>
-                    <th onclick="ordenarPor('dex')">DEX</th>
-                    <th onclick="ordenarPor('tvl')">TVL</th>
-                    <th>Ratio</th>
-                    <th onclick="ordenarPor('volume')">Volume 24h</th>
-                    <th onclick="ordenarPor('apr')">APR</th>
-                    <th>1h</th><th>6h</th><th>24h</th><th>7d</th><th>30d</th>
-                    <th onclick="ordenarPor('fee')">Fee</th>
-                    <th onclick="ordenarPor('age')">Age</th>
-                    <th>Score</th>
-                </tr>
-            </thead>
-            <tbody id="poolsTableBody"></tbody>
-        </table>
-    </div>
-</div>
-```
+Analisei seu site em `marcoscleber10.github.io/scalp5/` e identifiquei **2 causas prováveis** do travamento:
 
 ---
 
-### 2️⃣ Funções JavaScript CORREGIDAS (substitua apenas estas):
+## 🚨 Problema 1: WebSocket Binance Bloqueado (Preço não atualiza)
+
+**Sintoma**: Preço mostra `$ --,---.--` em vez do valor real.
+
+**Causa**: GitHub Pages força HTTPS, e alguns navegadores bloqueiam WebSockets externos por política de segurança [[6]].
+
+### ✅ Correção mínima (substitua apenas a função `initChart`):
 
 ```javascript
-// ========== FUNÇÕES DA ABA TOP POOLS (CORRIGIDAS) ==========
-
-function extrairNumeros(pool) {
-    const parseNum = (str) => { 
-        if(!str) return 0; 
-        let n = parseFloat(str.replace(/[KMB%$]/g,'')); 
-        if(str.includes('K')) n*=1e3; 
-        if(str.includes('M')) n*=1e6; 
-        return n; 
-    };
-    return { 
-        tvlNum: parseNum(pool.tvl), 
-        volNum: parseNum(pool.volume), 
-        aprNum: parseNum(pool.apr) 
-    };
-}
-
-function calcularScore(pool, tvls, vols, aprs) {
-    const {tvlNum,volNum,aprNum} = extrairNumeros(pool);
-    const tvlPerc = tvls.length ? tvls.filter(v=>v<tvlNum).length/tvls.length : 0;
-    const volPerc = vols.length ? vols.filter(v=>v<volNum).length/vols.length : 0;
-    const aprPerc = aprs.length ? aprs.filter(v=>v<aprNum).length/aprs.length : 0;
-    return (aprPerc*0.4)+(volPerc*0.3)+(tvlPerc*0.2);
-}
-
-function getTopAPRs(pools, n, filterFn = null) {
-    let filtered = filterFn ? pools.filter(filterFn) : [...pools];
-    filtered.sort((a,b) => parseFloat(b.apr) - parseFloat(a.apr));
-    return filtered.slice(0,n).map(p => ({ 
-        pair: p.pool, 
-        apr: p.apr, 
-        risk: getRiskLevel(p) 
-    }));
-}
-
-function refreshCategories() {
-    const container = document.getElementById('categoriesContainer');
+function initChart() {
+    const symbol = document.getElementById('pairSelector')?.value || "BINANCE:BTCUSDT";
+    const container = document.getElementById('chart_container');
     if(!container) return;
     
-    const bluechip = getTopAPRs(poolsData, 5);
-    const stable = getTopAPRs(poolsData, 5, p => 
-        p.pool.toUpperCase().includes('USDC') || 
-        p.pool.toUpperCase().includes('USDT') || 
-        p.pool.toUpperCase().includes('DAI'));
-    const rwa = getTopAPRs(poolsData, 5, p => 
-        ['COIN', 'NVDA', 'SLV', 'HOOD', 'TQQQ'].some(k => p.pool.toUpperCase().includes(k)));
-    const real = getTopAPRs(poolsData, 5, p => 
-        p.pool.toUpperCase().includes('BRL') || p.pool.toUpperCase().includes('BRZ'));
+    container.innerHTML = '<div style="color:#8b949e;text-align:center;padding:40px;">🔄 Carregando gráfico...</div>';
     
-    const categories = [
-        { title: "BEST BLUE-CHIP", items: bluechip },
-        { title: "BEST STABLE COIN", items: stable },
-        { title: "BEST RWA", items: rwa },
-        { title: "BEST REAL", items: real }
-    ];
+    // Fechar conexão anterior se existir
+    if(activeWS) { activeWS.close(); activeWS = null; }
+    if(metalInterval) { clearInterval(metalInterval); metalInterval = null; }
     
-    let html = '';
-    for (let cat of categories) {
-        html += `<div class="category-card">
-            <div class="category-title">${cat.title}
-                <span class="risk-dot ${cat.items[0]?.risk.class || 'risk-amarelo'}"></span>
-            </div>`;
-        for (let item of cat.items) {
-            html += `<div class="category-item">
-                <span class="pair"><span class="risk-dot ${item.risk.class}"></span>${item.pair}</span>
-                <span class="apr">${item.apr}</span>
-            </div>`;
+    setTimeout(() => {
+        try {
+            // TradingView widget - versão simplificada para GitHub Pages
+            new TradingView.widget({
+                "autosize": true,
+                "symbol": symbol,
+                "interval": currentTF,
+                "timezone": "Etc/UTC",
+                "theme": "dark",
+                "style": "1",
+                "locale": "br",
+                "container_id": "chart_container",
+                "hide_side_toolbar": false,
+                "allow_symbol_change": false,
+                "save_image": false,
+                "studies": ["RSI@tv-basicstudies"],
+                "overrides": {
+                    "paneProperties.background": "#0d1117",
+                    "paneProperties.vertGridProperties.color": "#161b22",
+                    "paneProperties.horzGridProperties.color": "#161b22"
+                }
+            });
+        } catch(e) {
+            console.error('Erro TradingView:', e);
+            container.innerHTML = '<div style="color:#ff3e3e;text-align:center;padding:20px;">⚠️ Gráfico indisponível<br><small>Atualize a página ou verifique sua conexão</small></div>';
         }
-        html += `</div>`;
-    }
-    container.innerHTML = html;
-}
-
-function gerarVariacao() { 
-    return [
-        (Math.random()*4-2).toFixed(2),
-        (Math.random()*4-2).toFixed(2),
-        (Math.random()*4-2).toFixed(2),
-        (Math.random()*4-2).toFixed(2),
-        (Math.random()*4-2).toFixed(2)
-    ]; 
-}
-
-function renderPoolsTable(pools) {
-    const tbody = document.getElementById('poolsTableBody');
-    if(!tbody) return;
+    }, 200);
     
-    tbody.innerHTML = '';
-    pools.forEach(p => {
-        const {aprNum} = extrairNumeros(p);
-        const scorePercent = Math.min(100, (aprNum / 500) * 100);
-        const variacoes = gerarVariacao();
-        const formatVar = (v) => `<span class="${parseFloat(v)>=0?'positive':'negative'}">${parseFloat(v)>=0?'▲':'▼'} ${Math.abs(v)}%</span>`;
-        const risk = getRiskLevel(p);
+    // Atualização de preço via fallback (se WebSocket falhar)
+    if(symbol.startsWith("TVC:")) {
+        // Metais: usa fetch com fallback
+        const asset = symbol === "TVC:GOLD" ? "GOLD" : symbol === "TVC:SILVER" ? "SILVER" : "WTI";
+        fetchHyperliquidPrice(asset);
+        metalInterval = setInterval(() => fetchHyperliquidPrice(asset), 10000); // 10s em vez de 3s
+    } else {
+        // Cripto: tenta WebSocket com tratamento de erro
+        let pair = symbol.split(':')[1]?.toLowerCase() || 'btcusdt';
+        let streamPair = pair.includes('btc') ? 'btcusdt' : pair.includes('eth') ? 'ethusdt' : 'solusdt';
         
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td><span class="risk-dot ${risk.class}"></span><strong>${p.pool}</strong></td>
-            <td>${p.network}</td>
-            <td>${p.dex}</td>
-            <td>$${p.tvl}</td>
-            <td><div class="ratio-bar"><span style="width:${p.ratio.split('/')[0]}%;"></span></div>${p.ratio}</td>
-            <td>$${p.volume}</td>
-            <td class="apr-high">${p.apr}</td>
-            <td>${formatVar(variacoes[0])}</td>
-            <td>${formatVar(variacoes[1])}</td>
-            <td>${formatVar(variacoes[2])}</td>
-            <td>${formatVar(variacoes[3])}</td>
-            <td>${formatVar(variacoes[4])}</td>
-            <td>${p.fee}</td>
-            <td>${p.age}</td>
-            <td>
-                <div class="score-bar-small">
-                    <div class="score-fill-small" style="width:${scorePercent}%;"></div>
-                </div>
-                ${Math.round(scorePercent)}%
-            </td>
-        `;
-        tbody.appendChild(tr);
-    });
-}
-
-function ordenarLista(lista, coluna, direcao) {
-    lista.sort((a,b) => {
-        let valA, valB;
-        if(coluna==='tvl' || coluna==='volume' || coluna==='apr') { 
-            valA = extrairNumeros(a)[coluna+'Num']; 
-            valB = extrairNumeros(b)[coluna+'Num']; 
-        } else { 
-            valA = a[coluna]; 
-            valB = b[coluna]; 
+        try {
+            activeWS = new WebSocket(`wss://stream.binance.com:443/ws/${streamPair}@ticker`);
+            activeWS.onopen = () => console.log('[WS] Conectado');
+            activeWS.onmessage = (e) => {
+                try {
+                    const data = JSON.parse(e.data);
+                    price = parseFloat(data.c);
+                    if(!isNaN(price)) {
+                        document.getElementById('priceText').innerText = `$ ${price.toLocaleString('en-US', {minimumFractionDigits:2})}`;
+                        pricesHistory.push(price);
+                        if(pricesHistory.length > 50) pricesHistory.shift();
+                        updateSignals();
+                        verificarAlarmes();
+                    }
+                } catch(err) { console.error('Erro ao processar WS:', err); }
+            };
+            activeWS.onerror = (err) => {
+                console.warn('[WS] Erro - usando fallback', err);
+                fetchBinanceFallback(streamPair);
+            };
+            activeWS.onclose = () => {
+                console.log('[WS] Reconectando em 5s...');
+                setTimeout(() => { if(document.visibilityState === 'visible') initChart(); }, 5000);
+            };
+        } catch(e) {
+            console.warn('WebSocket não suportado - usando fallback');
+            fetchBinanceFallback(streamPair);
         }
-        return direcao==='asc' ? (valA>valB?1:-1) : (valA<valB?1:-1);
-    });
-}
-
-function aplicarFiltrosEOrdenar() {
-    let poolsFiltradas = poolsData.filter(p => {
-        const {tvlNum,volNum,aprNum} = extrairNumeros(p);
-        if(tvlNum < filtros.tvlMin) return false;
-        if(volNum < filtros.volMin) return false;
-        if(aprNum < filtros.aprMin) return false;
-        if(searchTerm && !p.pool.toUpperCase().includes(searchTerm.toUpperCase())) return false;
-        return true;
-    });
-    
-    if(modoAtual === 'auto') {
-        const tvls = poolsFiltradas.map(p => extrairNumeros(p).tvlNum);
-        const vols = poolsFiltradas.map(p => extrairNumeros(p).volNum);
-        const aprs = poolsFiltradas.map(p => extrairNumeros(p).aprNum);
-        poolsFiltradas = poolsFiltradas.map(p => {
-            p.score = calcularScore(p, tvls, vols, aprs); 
-            return p;
-        });
-        poolsFiltradas.sort((a,b) => b.score - a.score);
-    } else if(modoAtual === 'apr') {
-        poolsFiltradas.sort((a,b) => extrairNumeros(b).aprNum - extrairNumeros(a).aprNum);
     }
-    // Modo manual: mostra todos os filtrados, sem ordenação automática
-    renderPoolsTable(poolsFiltradas);
 }
 
-function setModo(modo) { 
-    modoAtual = modo; 
-    document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
-    if(modo === 'auto') document.getElementById('modoAutoBtn')?.classList.add('active');
-    else if(modo === 'manual') document.getElementById('modoManualBtn')?.classList.add('active');
-    else if(modo === 'apr') document.getElementById('modoAPRBtn')?.classList.add('active');
-    aplicarFiltrosEOrdenar(); 
-}
-
-function aplicarFiltros() { 
-    filtros.tvlMin = parseFloat(document.getElementById('filtroTVL')?.value) || 0; 
-    filtros.volMin = parseFloat(document.getElementById('filtroVolume')?.value) || 0; 
-    filtros.aprMin = parseFloat(document.getElementById('filtroAPR')?.value) || 0; 
-    aplicarFiltrosEOrdenar(); 
-}
-
-function ordenarPor(coluna) { 
-    if(modoAtual === 'manual') {
-        ordenacaoAtual = { 
-            coluna, 
-            direcao: ordenacaoAtual.coluna === coluna && ordenacaoAtual.direcao === 'asc' ? 'desc' : 'asc' 
-        };
-    }
-    aplicarFiltrosEOrdenar(); 
-}
-
-function filtrarPorPar() { 
-    searchTerm = document.getElementById('searchPairInput')?.value.trim() || ''; 
-    aplicarFiltrosEOrdenar(); 
-}
-
-function atualizarPoolsCompleto() {
-    poolsData.forEach(p => {
-        let novoApr = parseFloat(p.apr) + (Math.random() * 30 - 15);
-        novoApr = Math.max(5, Math.min(500, novoApr));
-        p.apr = novoApr.toFixed(1) + '%';
-        
-        let novoTvl = parseFloat(p.tvl) + (Math.random() * 20 - 10);
-        novoTvl = Math.max(1, Math.min(500, novoTvl));
-        p.tvl = novoTvl.toFixed(1) + 'K';
-        
-        let novoVol = parseFloat(p.volume) + (Math.random() * 30 - 15);
-        novoVol = Math.max(0.1, Math.min(10, novoVol));
-        p.volume = novoVol.toFixed(2) + 'M';
-    });
-    refreshCategories();
-    aplicarFiltrosEOrdenar();
-    // Feedback visual sutil
-    const btn = document.querySelector('.btn-atualizar');
-    if(btn) {
-        const original = btn.innerHTML;
-        btn.innerHTML = '✅ Atualizado!';
-        setTimeout(() => btn.innerHTML = original, 1500);
+// Fallback para quando WebSocket falha
+async function fetchBinanceFallback(symbol) {
+    try {
+        const res = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${symbol.toUpperCase()}`);
+        const data = await res.json();
+        price = parseFloat(data.price);
+        if(!isNaN(price)) {
+            document.getElementById('priceText').innerText = `$ ${price.toLocaleString('en-US', {minimumFractionDigits:2})}`;
+            pricesHistory.push(price);
+            if(pricesHistory.length > 50) pricesHistory.shift();
+            updateSignals();
+        }
+    } catch(e) {
+        console.warn('Fallback também falhou');
+        // Mantém último preço válido ou mostra placeholder
+        if(lastValidPrice) {
+            document.getElementById('priceText').innerText = `$ ${lastValidPrice.toLocaleString('en-US', {minimumFractionDigits:2})} ⚠️`;
+        }
     }
 }
 ```
 
 ---
 
-## ✅ O que foi corrigido:
+## ⚠️ Problema 2: TradingView Widget com CORS em GitHub Pages
 
-| Problema | Solução |
-|----------|---------|
-| Busca não funcionava direito | `filtrarPorPar()` agora usa `?.value` e `toUpperCase()` consistente |
-| Botões de modo não atualizavam visual | `setModo()` agora atualiza a classe `active` nos botões |
-| Filtros podiam quebrar se elemento não existisse | Adicionado `?.` (optional chaining) em `getElementById` |
-| Modo "Manual" escondia tudo sem busca | Agora mostra pools filtradas mesmo sem termo de busca |
-| Feedback do botão "Atualizar" ausente | Adicionado efeito visual de confirmação |
+Widgets do TradingView podem falhar em domínios não oficiais devido a restrições de origem [[11]][[13]].
+
+### ✅ Solução: Adicione este meta tag no `<head>` do seu HTML:
+
+```html
+<!-- Adicione logo após <meta charset="UTF-8"> -->
+<meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests; connect-src 'self' https://*.binance.com wss://*.binance.com https://s3.tradingview.com https://*.tradingview.com; script-src 'self' 'unsafe-inline' https://s3.tradingview.com; style-src 'self' 'unsafe-inline';">
+```
 
 ---
 
-## 🎯 Como aplicar:
+## 🧪 Teste Rápido de Diagnóstico
 
-1. **Não mexa em nada fora do modal `#poolsModal`**
-2. Substitua **apenas** o conteúdo da `div#poolsTab` pelo HTML acima
-3. Substitua **apenas** as funções listadas no bloco JavaScript
-4. Mantenha todas as outras 7 abas e o resto do site intactos
+Abra o site, pressione `F12` → aba **Console** e verifique:
 
-Pronto! A aba "Top Pools" agora funciona de forma estável. 🚀
+| Mensagem no Console | Significado |
+|---------------------|-------------|
+| `WebSocket connection to 'wss://...' failed` | WebSocket bloqueado → use o fallback acima |
+| `CORS policy: No 'Access-Control-Allow-Origin'` | Problema de origem → adicione a meta tag CSP |
+| `TradingView is not defined` | Script não carregou → verifique conexão com `s3.tradingview.com` |
+| `Uncaught TypeError: Cannot read properties of null` | Elemento HTML não encontrado → verifique IDs no HTML |
 
-Precisa de ajuste em alguma outra aba específica? É só avisar!
+---
+
+## 🚀 Deploy Corrigido no GitHub Pages
+
+Após aplicar as correções:
+
+1. Commit e push das alterações
+2. Aguarde ~1-2 minutos para o GitHub Pages atualizar
+3. **Limpe o cache do navegador**: `Ctrl+Shift+Delete` → "Cached images and files"
+4. Acesse com `Ctrl+F5` para forçar recarregamento
+
+---
+
+## 💡 Dica Extra: Modo Offline de Emergência
+
+Adicione este bloco no final do `<script>` para evitar tela branca total:
+
+```javascript
+// Modo offline: se nada carregar em 10s, mostra interface básica
+setTimeout(() => {
+    if(price === 67728.12 && document.getElementById('priceText')?.innerText.includes('--')) {
+        document.getElementById('priceText').innerHTML = `<span style="color:var(--gold)">📴 Offline</span><br><small style="color:var(--text)">Preço manual: $67,728</small>`;
+        document.getElementById('chart_container').innerHTML = '<div style="color:var(--text);text-align:center;padding:30px;">📊 Gráfico indisponível<br><small>Verifique sua conexão</small></div>';
+    }
+}, 10000);
+```
+
+---
+
+## ✅ Resumo do que corrigir:
+
+```markdown
+[ ] Substituir função initChart() pela versão com fallback
+[ ] Adicionar meta tag CSP no <head>
+[ ] Adicionar tratamento de erro no WebSocket
+[ ] Testar no console do navegador (F12)
+[ ] Limpar cache após deploy (Ctrl+F5)
+```
+
+Se mesmo assim continuar travando, me envie uma **captura do Console (F12)** com os erros em vermelho que eu ajudo a diagnosticar exatamente! 🎯
