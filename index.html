@@ -3,938 +3,1460 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>StableYield Dual | Borrow & Supply Optimizer</title>
+  <title>StableYield PRO | Institutional Yield Optimizer</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
   <style>
     :root {
-      --bg-gradient-start: #0f172a;
-      --bg-gradient-end: #1e293b;
-      --card-bg: rgba(30, 41, 59, 0.6);
-      --border-color: rgba(100, 116, 139, 0.4);
-      --text-primary: #f1f5f9;
-      --text-secondary: #94a3b8;
+      --bg-primary: #0a0f1d;
+      --bg-secondary: #111827;
+      --card-bg: rgba(17, 24, 39, 0.85);
+      --border-color: rgba(75, 85, 99, 0.5);
+      --text-primary: #f9fafb;
+      --text-secondary: #9ca3af;
+      --accent-blue: #3b82f6;
+      --accent-green: #10b981;
+      --accent-red: #ef4444;
+      --accent-purple: #8b5cf6;
+      --accent-yellow: #f59e0b;
     }
     
-    * { box-sizing: border-box; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     
     body {
-      background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+      background: linear-gradient(135deg, var(--bg-primary) 0%, #1e293b 100%);
       color: var(--text-primary);
       min-height: 100vh;
-      font-family: system-ui, -apple-system, sans-serif;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
       line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
     }
     
+    /* Glassmorphism cards */
     .card {
       background: var(--card-bg);
-      backdrop-filter: blur(12px);
+      backdrop-filter: blur(16px);
       border: 1px solid var(--border-color);
       border-radius: 1rem;
-      padding: 1rem;
-      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      padding: 1.25rem;
+      transition: all 0.2s ease;
     }
     .card:hover {
-      border-color: rgba(59, 130, 246, 0.5);
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      border-color: rgba(59, 130, 246, 0.6);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    }
+    .card.premium {
+      border: 1px solid rgba(139, 92, 246, 0.5);
+      background: linear-gradient(135deg, rgba(139,92,246,0.1), rgba(17,24,39,0.9));
     }
     
+    /* Badges */
     .badge {
       display: inline-flex;
       align-items: center;
-      gap: 0.25rem;
-      padding: 0.25rem 0.5rem;
-      border-radius: 0.375rem;
-      font-size: 0.75rem;
-      font-weight: 500;
+      gap: 0.35rem;
+      padding: 0.25rem 0.6rem;
+      border-radius: 9999px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.025em;
     }
-    .badge-green { background: rgba(34, 197, 94, 0.15); color: #86efac; }
-    .badge-red { background: rgba(239, 68, 68, 0.15); color: #fca5a5; }
-    .badge-yellow { background: rgba(234, 179, 8, 0.15); color: #fde047; }
-    .badge-blue { background: rgba(59, 130, 246, 0.15); color: #93c5fd; }
-    .badge-purple { background: rgba(168, 85, 247, 0.15); color: #d8b4fe; }
+    .badge-green { background: rgba(16, 185, 129, 0.15); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.3); }
+    .badge-red { background: rgba(239, 68, 68, 0.15); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
+    .badge-yellow { background: rgba(245, 158, 11, 0.15); color: #fcd34d; border: 1px solid rgba(245,158,11,0.3); }
+    .badge-blue { background: rgba(59, 130, 246, 0.15); color: #93c5fd; border: 1px solid rgba(59,130,246,0.3); }
+    .badge-purple { background: rgba(139, 92, 247, 0.15); color: #c4b5fd; border: 1px solid rgba(139,92,247,0.3); }
+    .badge-premium { 
+      background: linear-gradient(135deg, rgba(139,92,247,0.2), rgba(59,130,246,0.2)); 
+      color: #e9d5ff; 
+      border: 1px solid rgba(168,85,247,0.5);
+      animation: shimmer 2s infinite;
+    }
+    @keyframes shimmer { 0% { opacity: 1; } 50% { opacity: 0.85; } 100% { opacity: 1; } }
     
+    /* Animations */
     .pulse { animation: pulse 2s infinite; }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.6; }
+    @keyframes pulse { 0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(239,68,68,0.4); } 50% { opacity: 0.9; box-shadow: 0 0 0 8px rgba(239,68,68,0); } }
+    
+    .highlight-opportunity {
+      animation: highlightPulse 2s ease-in-out infinite;
+      position: relative;
+    }
+    @keyframes highlightPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(139,92,247,0); }
+      50% { box-shadow: 0 0 0 2px rgba(139,92,247,0.4); }
     }
     
-    .loading {
+    /* Loading */
+    .loading-spinner {
       display: inline-block;
-      width: 1.25rem;
-      height: 1.25rem;
-      border: 2px solid rgba(148, 163, 184, 0.3);
+      width: 1.5rem;
+      height: 1.5rem;
+      border: 2px solid rgba(148,163,184,0.3);
       border-radius: 50%;
-      border-top-color: #60a5fa;
+      border-top-color: var(--accent-blue);
       animation: spin 0.8s linear infinite;
-      margin-right: 0.5rem;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
     
-    table th {
+    .skeleton {
+      background: linear-gradient(90deg, rgba(30,41,59,0.5) 25%, rgba(51,65,85,0.5) 50%, rgba(30,41,59,0.5) 75%);
+      background-size: 200% 100%;
+      animation: skeleton-loading 1.5s infinite;
+      border-radius: 0.375rem;
+    }
+    @keyframes skeleton-loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+    
+    /* Table */
+    table { width: 100%; border-collapse: separate; border-spacing: 0; }
+    thead th {
+      position: sticky;
+      top: 0;
+      background: rgba(17,24,39,0.95);
+      z-index: 10;
       text-align: left;
-      font-size: 0.75rem;
-      font-weight: 600;
+      font-size: 0.7rem;
+      font-weight: 700;
       color: var(--text-secondary);
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      padding: 0.75rem 0.5rem;
+      padding: 1rem 0.75rem;
       white-space: nowrap;
-    }
-    table td {
-      padding: 0.75rem 0.5rem;
-      font-size: 0.875rem;
-      color: var(--text-primary);
-      border-top: 1px solid var(--border-color);
-    }
-    table tr:hover { background: rgba(59, 130, 246, 0.05); }
-    
-    .sortable {
+      border-bottom: 1px solid var(--border-color);
       cursor: pointer;
       user-select: none;
-      position: relative;
-      padding-right: 1.25rem !important;
+      transition: color 0.15s;
     }
-    .sortable:hover { color: #60a5fa; }
-    .sortable::after {
-      content: "⇅";
-      position: absolute;
-      right: 0.5rem;
-      font-size: 0.7em;
-      opacity: 0.5;
+    thead th:hover { color: var(--accent-blue); }
+    thead th.sort-asc::after { content: " ▲"; font-size: 0.6em; }
+    thead th.sort-desc::after { content: " ▼"; font-size: 0.6em; }
+    
+    tbody td {
+      padding: 0.875rem 0.75rem;
+      font-size: 0.85rem;
+      border-bottom: 1px solid var(--border-color);
+      transition: background 0.15s;
     }
-    .sortable.asc::after { content: "↑"; opacity: 1; color: #60a5fa; }
-    .sortable.desc::after { content: "↓"; opacity: 1; color: #60a5fa; }
-    
-    .mode-btn.active {
-      border-color: currentColor !important;
-      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+    tbody tr:hover { 
+      background: rgba(59, 130, 246, 0.08); 
+      cursor: pointer;
+    }
+    tbody tr.highlight-opportunity:hover {
+      background: rgba(139, 92, 247, 0.15);
     }
     
-    .highlight-borrow { animation: highlightBorrow 1.5s ease-in-out; }
-    .highlight-supply { animation: highlightSupply 1.5s ease-in-out; }
-    .highlight-spread { animation: highlightSpread 1.5s ease-in-out; }
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      font-weight: 500;
+      font-size: 0.875rem;
+      transition: all 0.2s;
+      cursor: pointer;
+      border: none;
+    }
+    .btn-primary { background: var(--accent-blue); color: white; }
+    .btn-primary:hover { background: #2563eb; transform: translateY(-1px); }
+    .btn-success { background: var(--accent-green); color: white; }
+    .btn-success:hover { background: #059669; transform: translateY(-1px); }
+    .btn-premium { 
+      background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue)); 
+      color: white;
+      box-shadow: 0 4px 14px rgba(139,92,247,0.4);
+    }
+    .btn-premium:hover { 
+      transform: translateY(-1px); 
+      box-shadow: 0 6px 20px rgba(139,92,247,0.6);
+    }
+    .btn-outline { 
+      background: transparent; 
+      border: 1px solid var(--border-color); 
+      color: var(--text-secondary);
+    }
+    .btn-outline:hover { border-color: var(--accent-blue); color: var(--accent-blue); }
     
-    @keyframes highlightBorrow { 0%,100%{background:transparent} 50%{background:rgba(239,68,68,0.15)} }
-    @keyframes highlightSupply { 0%,100%{background:transparent} 50%{background:rgba(34,197,94,0.15)} }
-    @keyframes highlightSpread { 0%,100%{background:transparent} 50%{background:rgba(168,85,247,0.15)} }
+    /* Mode tabs */
+    .mode-tab {
+      padding: 0.6rem 1.2rem;
+      border-radius: 0.75rem;
+      font-weight: 500;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: 1px solid transparent;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .mode-tab.active {
+      border-color: currentColor;
+      box-shadow: 0 0 0 2px rgba(59,130,246,0.3);
+    }
+    .mode-tab.premium {
+      background: linear-gradient(135deg, rgba(139,92,247,0.15), rgba(59,130,246,0.15));
+      border-color: rgba(139,92,247,0.5);
+    }
     
-    /* Scrollbar personalizada */
-    ::-webkit-scrollbar { width: 8px; height: 8px; }
-    ::-webkit-scrollbar-track { background: rgba(30,41,59,0.5); }
-    ::-webkit-scrollbar-thumb { background: rgba(100,116,139,0.5); border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: rgba(148,163,184,0.7); }
+    /* Alerts panel */
+    .alert-panel {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease, padding 0.3s ease;
+    }
+    .alert-panel.open {
+      max-height: 500px;
+      padding: 1rem;
+    }
+    .alert-item {
+      padding: 0.75rem;
+      border-left: 3px solid var(--accent-yellow);
+      background: rgba(245,158,11,0.1);
+      margin-bottom: 0.5rem;
+      border-radius: 0 0.375rem 0.375rem 0;
+    }
+    .alert-item.critical {
+      border-left-color: var(--accent-red);
+      background: rgba(239,68,68,0.1);
+    }
+    .alert-item.opportunity {
+      border-left-color: var(--accent-green);
+      background: rgba(16,185,129,0.1);
+    }
+    
+    /* Modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.2s;
+    }
+    .modal-backdrop.active {
+      opacity: 1;
+      visibility: visible;
+    }
+    .modal {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 1rem;
+      padding: 1.5rem;
+      max-width: 28rem;
+      width: 90%;
+      transform: translateY(20px);
+      transition: transform 0.2s;
+    }
+    .modal-backdrop.active .modal {
+      transform: translateY(0);
+    }
     
     /* Responsive */
-    @media (max-width: 768px) {
+    @media (max-width: 1024px) {
+      .hide-lg { display: none; }
       table { font-size: 0.8rem; }
-      table th, table td { padding: 0.5rem 0.25rem; }
-      .hide-mobile { display: none; }
+      th, td { padding: 0.6rem 0.4rem !important; }
     }
+    @media (max-width: 768px) {
+      .hide-md { display: none; }
+      .card { padding: 1rem; }
+    }
+    
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: rgba(30,41,59,0.5); }
+    ::-webkit-scrollbar-thumb { background: rgba(75,85,99,0.7); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(100,116,139,0.9); }
+    
+    /* Data source indicator */
+    .data-source {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.75rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 9999px;
+    }
+    .data-source.api { background: rgba(16,185,129,0.15); color: #6ee7b7; }
+    .data-source.fallback { background: rgba(245,158,11,0.15); color: #fcd34d; }
+    .data-source.premium { background: rgba(139,92,247,0.15); color: #c4b5fd; }
   </style>
 </head>
-<body class="min-h-screen">
-  
+<body>
+
   <!-- Header -->
-  <header class="border-b border-slate-700/50 py-4 px-4 md:px-8 sticky top-0 bg-slate-900/95 backdrop-blur z-40">
-    <div class="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
-      <div>
-        <h1 class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent flex items-center gap-2">
-          <i class="fas fa-chart-line"></i>StableYield Dual
-        </h1>
-        <p class="text-slate-400 text-sm mt-1">
-          Encontre o melhor lugar para <span class="text-red-400 font-medium">pegar emprestado</span> ou <span class="text-green-400 font-medium">fornecer</span> stablecoins
-        </p>
-      </div>
-      <div class="flex flex-wrap items-center gap-2 text-sm">
-        <span class="badge badge-blue">
-          <i class="fas fa-sync-alt mr-1"></i>
-          <span id="lastUpdate">--:--:--</span>
-        </span>
-        <span class="badge badge-green pulse hidden" id="negativeAlert">
-          <i class="fas fa-bolt mr-1"></i>
-          <span id="negCount">0</span> pagos para borrow
-        </span>
-        <span class="badge badge-yellow" id="dataSource">
-          <i class="fas fa-database mr-1"></i>Mock Data
-        </span>
+  <header class="sticky top-0 z-50 bg-[#0a0f1d]/95 backdrop-blur-xl border-b border-slate-700/50">
+    <div class="max-w-7xl mx-auto px-4 py-3">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+            <i class="fas fa-chart-network text-white text-lg"></i>
+          </div>
+          <div>
+            <h1 class="text-xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-emerald-400 bg-clip-text text-transparent">
+              StableYield PRO
+            </h1>
+            <p class="text-xs text-slate-400">Institutional Yield Intelligence</p>
+          </div>
+        </div>
+        
+        <div class="flex flex-wrap items-center gap-2 text-xs">
+          <span class="data-source api" id="dataSource">
+            <i class="fas fa-cloud"></i> Multi-Source API
+          </span>
+          <span class="badge badge-blue">
+            <i class="fas fa-sync-alt"></i>
+            <span id="lastUpdate">--:--:--</span>
+          </span>
+          <button id="btnAlerts" class="btn btn-outline text-xs py-1 px-2 relative">
+            <i class="fas fa-bell"></i>
+            <span class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-[10px] flex items-center justify-center hidden" id="alertCount">0</span>
+          </button>
+          <button id="btnPremium" class="btn btn-premium text-xs py-1 px-3">
+            <i class="fas fa-crown"></i> PRO
+          </button>
+        </div>
       </div>
     </div>
   </header>
 
-  <!-- Mode Toggle -->
-  <div class="max-w-7xl mx-auto px-4 md:px-8 py-4">
+  <!-- Strategy Mode Tabs -->
+  <div class="max-w-7xl mx-auto px-4 py-4">
     <div class="flex flex-wrap gap-2 justify-center md:justify-start">
-      <button id="modeBorrow" class="mode-btn active bg-red-500/20 border border-red-500 text-red-300 px-4 py-2 rounded-lg font-medium transition flex items-center gap-2">
-        <i class="fas fa-hand-holding-usd"></i>📉 Pegar Emprestado
+      <button class="mode-tab active" data-mode="borrow">
+        <i class="fas fa-hand-holding-usd text-red-400"></i> Borrow
       </button>
-      <button id="modeSupply" class="mode-btn bg-green-500/20 border border-green-500/50 text-slate-300 px-4 py-2 rounded-lg font-medium transition flex items-center gap-2">
-        <i class="fas fa-piggy-bank"></i>📈 Fornecer Liquidez
+      <button class="mode-tab" data-mode="supply">
+        <i class="fas fa-piggy-bank text-green-400"></i> Supply
       </button>
-      <button id="modeSpread" class="mode-btn bg-purple-500/20 border border-purple-500/50 text-slate-300 px-4 py-2 rounded-lg font-medium transition flex items-center gap-2">
-        <i class="fas fa-exchange-alt"></i>🔄 Maior Spread
+      <button class="mode-tab" data-mode="spread">
+        <i class="fas fa-exchange-alt text-purple-400"></i> Spread
+      </button>
+      <button class="mode-tab premium" data-mode="delta">
+        <i class="fas fa-balance-scale text-yellow-400"></i> Delta-Neutral ⭐
+      </button>
+      <button class="mode-tab premium" data-mode="arb">
+        <i class="fas fa-bolt text-orange-400"></i> Arbitrage ⚡
       </button>
     </div>
   </div>
 
-  <!-- Filters -->
-  <div class="max-w-7xl mx-auto px-4 md:px-8 py-2">
-    <div class="card flex flex-wrap gap-3 items-end">
-      <div class="flex-1 min-w-[140px]">
-        <label class="block text-xs text-slate-400 mb-1">Rede</label>
-        <select id="filterChain" class="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500 transition">
-          <option value="all">Todas</option>
-        </select>
+  <!-- Advanced Filters -->
+  <div class="max-w-7xl mx-auto px-4 pb-4">
+    <div class="card">
+      <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+        <div>
+          <label class="block text-[10px] text-slate-400 mb-1 uppercase tracking-wide">Rede</label>
+          <select id="filterChain" class="w-full bg-slate-900/50 border border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500">
+            <option value="all">Todas</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-[10px] text-slate-400 mb-1 uppercase tracking-wide">Stable</label>
+          <select id="filterStable" class="w-full bg-slate-900/50 border border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500">
+            <option value="all">Todas</option>
+            <option value="USDC">USDC</option>
+            <option value="USDT">USDT</option>
+            <option value="DAI">DAI</option>
+            <option value="crvUSD">crvUSD</option>
+            <option value="FRAX">FRAX</option>
+            <option value="BRZ">BRZ</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-[10px] text-slate-400 mb-1 uppercase tracking-wide">Min. TVL</label>
+          <select id="filterTVL" class="w-full bg-slate-900/50 border border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500">
+            <option value="0">Qualquer</option>
+            <option value="1000000">$1M+</option>
+            <option value="10000000">$10M+</option>
+            <option value="50000000">$50M+</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-[10px] text-slate-400 mb-1 uppercase tracking-wide">Risco Máx.</label>
+          <select id="filterRisk" class="w-full bg-slate-900/50 border border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500">
+            <option value="all">Qualquer</option>
+            <option value="baixo">Baixo</option>
+            <option value="medio">Médio</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-[10px] text-slate-400 mb-1 uppercase tracking-wide">Min. APY</label>
+          <input type="number" id="filterMinAPY" placeholder="0" min="0" max="100"
+            class="w-full bg-slate-900/50 border border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"/>
+        </div>
+        <div>
+          <label class="block text-[10px] text-slate-400 mb-1 uppercase tracking-wide">Cap Util.</label>
+          <select id="filterCap" class="w-full bg-slate-900/50 border border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500">
+            <option value="all">Qualquer</option>
+            <option value="available">Disponível</option>
+            <option value="under80">&lt;80% utilizado</option>
+          </select>
+        </div>
+        <div class="flex items-end gap-2">
+          <button id="btnRefresh" class="btn btn-primary flex-1 text-xs">
+            <i class="fas fa-redo"></i> Atualizar
+          </button>
+          <button id="btnExport" class="btn btn-outline text-xs px-3">
+            <i class="fas fa-download"></i>
+          </button>
+        </div>
       </div>
-      <div class="flex-1 min-w-[140px]">
-        <label class="block text-xs text-slate-400 mb-1">Stablecoin</label>
-        <select id="filterStable" class="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500 transition">
-          <option value="all">Todas</option>
-          <option value="USDC">USDC</option>
-          <option value="USDT">USDT</option>
-          <option value="DAI">DAI</option>
-          <option value="crvUSD">crvUSD</option>
-          <option value="FRAX">FRAX</option>
-          <option value="BRZ">BRZ</option>
-        </select>
-      </div>
-      <div class="flex-1 min-w-[140px]">
-        <label class="block text-xs text-slate-400 mb-1">Min. Liquidez</label>
-        <select id="filterLiquidity" class="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500 transition">
-          <option value="0">Qualquer</option>
-          <option value="1000000">$1M+</option>
-          <option value="10000000">$10M+</option>
-          <option value="50000000">$50M+</option>
-        </select>
-      </div>
-      <div class="flex-1 min-w-[140px]">
-        <label class="block text-xs text-slate-400 mb-1">Risco Máx.</label>
-        <select id="filterRisk" class="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500 transition">
-          <option value="all">Qualquer</option>
-          <option value="Baixo">Baixo</option>
-          <option value="Médio">Médio</option>
-        </select>
-      </div>
-      <div class="flex-1 min-w-[140px]">
-        <label class="block text-xs text-slate-400 mb-1">Min. APY</label>
-        <input type="number" id="filterMinAPY" placeholder="0" min="0" max="100"
-          class="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500 transition"/>
-      </div>
-      <div class="flex gap-2">
-        <button id="btnRefresh" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded text-sm transition flex items-center gap-1">
-          <i class="fas fa-redo"></i>Atualizar
-        </button>
-        <button id="btnExport" class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded text-sm transition flex items-center gap-1">
-          <i class="fas fa-download"></i>CSV
-        </button>
+      
+      <!-- Premium Filters (collapsed by default) -->
+      <div id="premiumFilters" class="mt-3 pt-3 border-t border-slate-700 hidden">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div>
+            <label class="block text-[10px] text-slate-400 mb-1 uppercase tracking-wide">Reward Weight</label>
+            <input type="range" id="filterRewardWeight" min="0" max="100" value="50" class="w-full"/>
+            <span class="text-xs text-slate-500" id="rewardWeightValue">50%</span>
+          </div>
+          <div>
+            <label class="block text-[10px] text-slate-400 mb-1 uppercase tracking-wide">Min. Real Liquidity</label>
+            <input type="number" id="filterRealLiquidity" placeholder="$" min="0"
+              class="w-full bg-slate-900/50 border border-slate-600 rounded-lg px-3 py-2 text-sm"/>
+          </div>
+          <div>
+            <label class="block text-[10px] text-slate-400 mb-1 uppercase tracking-wide">Protocolos</label>
+            <select id="filterProtocol" class="w-full bg-slate-900/50 border border-slate-600 rounded-lg px-3 py-2 text-sm">
+              <option value="all">Todos</option>
+              <option value="aave">Aave</option>
+              <option value="compound">Compound</option>
+              <option value="morpho">Morpho</option>
+              <option value="venus">Venus</option>
+            </select>
+          </div>
+          <div class="flex items-end">
+            <span class="badge badge-purple text-[10px]">
+              <i class="fas fa-crown"></i> PRO Feature
+            </span>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- Stats Summary -->
-  <div class="max-w-7xl mx-auto px-4 md:px-8 py-4">
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+  <!-- Stats Dashboard -->
+  <div class="max-w-7xl mx-auto px-4 py-2">
+    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
       <div class="card text-center">
-        <div class="text-2xl font-bold text-red-400" id="bestBorrowRate">--</div>
-        <div class="text-xs text-slate-400">Melhor Borrow APY</div>
+        <div class="text-lg font-bold text-red-400" id="statBestBorrow">--</div>
+        <div class="text-[10px] text-slate-400 uppercase tracking-wide">Best Borrow</div>
       </div>
       <div class="card text-center">
-        <div class="text-2xl font-bold text-green-400" id="bestSupplyRate">--</div>
-        <div class="text-xs text-slate-400">Melhor Supply APY</div>
+        <div class="text-lg font-bold text-green-400" id="statBestSupply">--</div>
+        <div class="text-[10px] text-slate-400 uppercase tracking-wide">Best Supply</div>
       </div>
       <div class="card text-center">
-        <div class="text-2xl font-bold text-purple-400" id="bestSpread">--</div>
-        <div class="text-xs text-slate-400">Maior Spread</div>
+        <div class="text-lg font-bold text-purple-400" id="statBestSpread">--</div>
+        <div class="text-[10px] text-slate-400 uppercase tracking-wide">Best Spread</div>
+      </div>
+      <div class="card text-center premium">
+        <div class="text-lg font-bold text-yellow-400" id="statBestDelta">--</div>
+        <div class="text-[10px] text-slate-300 uppercase tracking-wide">Delta-Neutral ⭐</div>
       </div>
       <div class="card text-center">
-        <div class="text-2xl font-bold text-blue-400" id="totalLiquidity">--</div>
-        <div class="text-xs text-slate-400">Liquidez Total</div>
+        <div class="text-lg font-bold text-blue-400" id="statTotalTVL">--</div>
+        <div class="text-[10px] text-slate-400 uppercase tracking-wide">TVL Total</div>
       </div>
+      <div class="card text-center">
+        <div class="text-lg font-bold" id="statOpportunities">--</div>
+        <div class="text-[10px] text-slate-400 uppercase tracking-wide">Oportunidades</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Alerts Panel -->
+  <div class="max-w-7xl mx-auto px-4 py-2">
+    <div class="card" id="alertsContainer">
+      <div class="flex items-center justify-between mb-2">
+        <h3 class="font-semibold text-sm flex items-center gap-2">
+          <i class="fas fa-bell text-yellow-400"></i> Alertas em Tempo Real
+        </h3>
+        <span class="text-xs text-slate-400" id="alertStatus">Monitorando...</span>
+      </div>
+      <div class="alert-panel" id="alertsPanel">
+        <!-- Alerts injected here -->
+      </div>
+      <button id="toggleAlerts" class="text-xs text-blue-400 hover:text-blue-300 mt-1">
+        <i class="fas fa-chevron-down"></i> Mostrar alertas
+      </button>
     </div>
   </div>
 
   <!-- Loading State -->
-  <div id="loading" class="max-w-7xl mx-auto px-4 md:px-8 py-12 text-center hidden">
-    <div class="inline-flex items-center gap-3 text-slate-300">
-      <span class="loading"></span>
-      <span>Carregando dados da DefiLlama...</span>
+  <div id="loading" class="max-w-7xl mx-auto px-4 py-12 text-center hidden">
+    <div class="inline-flex flex-col items-center gap-3">
+      <span class="loading-spinner"></span>
+      <span class="text-slate-300">Sincronizando dados multi-source...</span>
+      <div class="flex gap-2 text-[10px] text-slate-500">
+        <span class="badge badge-blue">DefiLlama</span>
+        <span class="badge badge-green">Aave API</span>
+        <span class="badge badge-purple">Morpho</span>
+      </div>
     </div>
-    <p class="text-slate-500 text-sm mt-2">Isso pode levar alguns segundos na primeira vez</p>
   </div>
 
   <!-- Error State -->
-  <div id="error" class="max-w-7xl mx-auto px-4 md:px-8 py-4 hidden">
+  <div id="error" class="max-w-7xl mx-auto px-4 py-4 hidden">
     <div class="card border-red-500/50 bg-red-500/10">
       <div class="flex items-start gap-3">
         <i class="fas fa-exclamation-triangle text-red-400 mt-0.5"></i>
         <div>
-          <h4 class="font-medium text-red-300">Erro ao carregar dados</h4>
-          <p class="text-sm text-slate-400 mt-1" id="errorMsg">Tentando usar dados de fallback...</p>
-          <button id="btnRetry" class="mt-2 text-xs bg-red-600 hover:bg-red-500 px-3 py-1 rounded transition">
-            Tentar novamente
-          </button>
+          <h4 class="font-medium text-red-300 text-sm">Erro na sincronização de dados</h4>
+          <p class="text-xs text-slate-400 mt-1" id="errorMsg">Tentando fallback para dados cacheados...</p>
+          <div class="flex gap-2 mt-2">
+            <button id="btnRetry" class="btn btn-outline text-xs py-1 px-2">Tentar novamente</button>
+            <button id="btnUseCache" class="btn btn-primary text-xs py-1 px-2">Usar cache</button>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
   <!-- Main Table -->
-  <div class="max-w-7xl mx-auto px-4 md:px-8 pb-8">
+  <div class="max-w-7xl mx-auto px-4 pb-8">
     <div class="card overflow-x-auto">
-      <table class="w-full" id="marketsTable">
+      <table>
         <thead>
           <tr>
-            <th class="sortable" data-sort="score">Score</th>
-            <th class="sortable" data-sort="protocol">Protocolo</th>
-            <th class="sortable hide-mobile" data-sort="chain">Rede</th>
-            <th class="sortable" data-sort="stable">Stable</th>
-            <th class="sortable" data-sort="supplyAPY">Supply APY</th>
-            <th class="sortable" data-sort="borrowAPY">Borrow APY</th>
-            <th class="sortable" data-sort="netBorrow">Net Borrow</th>
-            <th class="sortable hide-mobile" data-sort="spread">Spread</th>
-            <th class="sortable hide-mobile" data-sort="utilization">Util.</th>
-            <th class="sortable" data-sort="liquidity">Liquidez</th>
+            <th data-sort="score">Score</th>
+            <th data-sort="protocol">Protocolo</th>
+            <th class="hide-md" data-sort="chain">Rede</th>
+            <th data-sort="stable">Asset</th>
+            <th data-sort="supplyAPY">Supply</th>
+            <th data-sort="borrowAPY">Borrow</th>
+            <th data-sort="netBorrow">Net Borrow</th>
+            <th class="hide-lg" data-sort="spread">Spread</th>
+            <th class="hide-lg premium-col" data-sort="deltaAPY">Delta-Neutral ⭐</th>
+            <th class="hide-md" data-sort="realLiquidity">Liq. Real</th>
+            <th>Cap</th>
             <th>Risco</th>
             <th>Ação</th>
           </tr>
         </thead>
         <tbody id="tableBody">
-          <!-- Preenchido via JS -->
+          <!-- Rendered by JS -->
         </tbody>
       </table>
       <div id="noResults" class="hidden text-center py-8 text-slate-400">
-        <i class="fas fa-search text-2xl mb-2"></i><br/>
-        Nenhum mercado encontrado com os filtros atuais.
+        <i class="fas fa-filter text-2xl mb-2"></i>
+        <p>Nenhum mercado corresponde aos filtros atuais.</p>
+        <button class="btn btn-outline text-xs mt-2" id="btnClearFilters">Limpar filtros</button>
       </div>
     </div>
-    <div class="text-xs text-slate-500 mt-2 text-center">
-      Exibindo <span id="visibleCount">0</span> de <span id="totalCount">0</span> mercados
+    <div class="flex items-center justify-between mt-2 text-[10px] text-slate-500">
+      <span>Exibindo <span id="visibleCount">0</span> de <span id="totalCount">0</span> mercados</span>
+      <span id="dataFreshness">Última atualização: --</span>
     </div>
   </div>
 
-  <!-- Simulator Modal -->
-  <div id="simulator" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-50 p-4">
-    <div class="card max-w-md w-full animate-fade-in">
-      <div class="flex justify-between items-center mb-4 pb-3 border-b border-slate-700">
+  <!-- Execution Modal -->
+  <div class="modal-backdrop" id="execModal">
+    <div class="modal">
+      <div class="flex justify-between items-start mb-4">
         <h3 class="font-bold flex items-center gap-2">
-          <i class="fas fa-calculator text-blue-400"></i>Simulador de Retorno
+          <i class="fas fa-rocket text-blue-400"></i> Executar Estratégia
         </h3>
-        <button id="closeSim" class="text-slate-400 hover:text-white transition">
-          <i class="fas fa-times"></i>
-        </button>
+        <button id="closeExec" class="text-slate-400 hover:text-white"><i class="fas fa-times"></i></button>
       </div>
-      <div class="space-y-4">
-        <div>
-          <label class="block text-xs text-slate-400 mb-1">Valor ($ USD)</label>
-          <input type="number" id="simAmount" value="10000" min="1" 
-            class="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 focus:outline-none focus:border-blue-500 transition"/>
-        </div>
-        <div>
-          <label class="block text-xs text-slate-400 mb-1">Período</label>
-          <select id="simPeriod" class="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 focus:outline-none focus:border-blue-500 transition">
-            <option value="7">7 dias</option>
-            <option value="30">30 dias</option>
-            <option value="90">90 dias</option>
-            <option value="180">180 dias</option>
-            <option value="365" selected>1 ano</option>
-          </select>
-        </div>
-        <div class="bg-slate-900/50 rounded-lg p-3 text-sm space-y-2">
-          <div class="flex justify-between">
+      
+      <div class="space-y-3 text-sm">
+        <div class="bg-slate-900/50 rounded-lg p-3">
+          <div class="flex justify-between mb-1">
             <span class="text-slate-400">Protocolo:</span>
-            <strong id="simProtocol" class="text-white">--</strong>
+            <strong id="execProtocol">--</strong>
           </div>
-          <div class="flex justify-between">
-            <span class="text-slate-400">APY Aplicado:</span>
-            <strong id="simAPY" class="text-white">--</strong>
+          <div class="flex justify-between mb-1">
+            <span class="text-slate-400">Rede:</span>
+            <span id="execChain" class="badge badge-blue">--</span>
           </div>
-          <div class="flex justify-between pt-2 border-t border-slate-700">
-            <span class="text-slate-400">Retorno Estimado:</span>
-            <strong id="simReturn" class="text-green-400">--</strong>
+          <div class="flex justify-between mb-1">
+            <span class="text-slate-400">Asset:</span>
+            <strong id="execAsset">--</strong>
           </div>
         </div>
-        <button id="btnSimulate" class="w-full bg-blue-600 hover:bg-blue-500 py-2.5 rounded font-medium transition flex items-center justify-center gap-2">
-          <i class="fas fa-calculator"></i>Calcular Retorno
-        </button>
-        <p class="text-xs text-slate-500 text-center">
-          <i class="fas fa-info-circle mr-1"></i>Cálculo baseado em juros compostos. Não considera taxas de gás ou slippage.
-        </p>
+        
+        <div class="grid grid-cols-2 gap-2">
+          <div class="bg-green-500/10 rounded p-2 text-center">
+            <div class="text-xs text-slate-400">Supply APY</div>
+            <div class="font-bold text-green-400" id="execSupply">--</div>
+          </div>
+          <div class="bg-red-500/10 rounded p-2 text-center">
+            <div class="text-xs text-slate-400">Net Borrow</div>
+            <div class="font-bold text-red-400" id="execBorrow">--</div>
+          </div>
+        </div>
+        
+        <div class="bg-purple-500/10 rounded p-3 text-center premium" id="execDeltaRow">
+          <div class="text-xs text-slate-300">Retorno Delta-Neutral ⭐</div>
+          <div class="text-xl font-bold text-yellow-400" id="execDelta">--</div>
+        </div>
+        
+        <div class="text-[10px] text-slate-500 bg-slate-900/30 rounded p-2">
+          <i class="fas fa-info-circle mr-1"></i>
+          Você será redirecionado para o protocolo. Sempre verifique taxas de gás, slippage e riscos de smart contract.
+        </div>
+        
+        <div class="flex gap-2">
+          <button id="btnExecute" class="btn btn-success flex-1">
+            <i class="fas fa-external-link-alt"></i> Ir para Protocolo
+          </button>
+          <button id="btnAlertMe" class="btn btn-outline">
+            <i class="fas fa-bell"></i> Alertar
+          </button>
+        </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Premium Modal -->
+  <div class="modal-backdrop" id="premiumModal">
+    <div class="modal premium border-purple-500/50">
+      <div class="text-center mb-4">
+        <div class="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center mb-3">
+          <i class="fas fa-crown text-2xl text-white"></i>
+        </div>
+        <h3 class="font-bold text-lg">StableYield PRO</h3>
+        <p class="text-sm text-slate-400 mt-1">Acesso institucional a yield intelligence</p>
+      </div>
+      
+      <div class="space-y-2 text-sm mb-4">
+        <div class="flex items-center gap-2">
+          <i class="fas fa-check text-green-400"></i>
+          <span>APIs diretas: Aave, Compound, Morpho, Venus</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <i class="fas fa-check text-green-400"></i>
+          <span>Liquidez real: caps, availability, utilization</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <i class="fas fa-check text-green-400"></i>
+          <span>Alertas em tempo real via webhook/email</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <i class="fas fa-check text-green-400"></i>
+          <span>Estratégias Delta-Neutral otimizadas</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <i class="fas fa-check text-green-400"></i>
+          <span>Export API & webhooks para bots</span>
+        </div>
+      </div>
+      
+      <div class="text-center mb-4">
+        <div class="text-3xl font-bold text-white">$49<span class="text-sm text-slate-400">/mês</span></div>
+        <p class="text-xs text-slate-500">ou $399/ano (2 meses grátis)</p>
+      </div>
+      
+      <button class="btn btn-premium w-full py-3 font-semibold">
+        <i class="fas fa-rocket"></i> Assinar PRO
+      </button>
+      
+      <p class="text-[10px] text-slate-500 text-center mt-3">
+        <i class="fas fa-lock mr-1"></i> Pagamento seguro via Stripe. Cancelamento a qualquer momento.
+      </p>
+      
+      <button id="closePremium" class="w-full text-xs text-slate-400 hover:text-white mt-2">
+        Continuar com versão gratuita
+      </button>
     </div>
   </div>
 
   <!-- Footer -->
-  <footer class="border-t border-slate-700/50 py-4 px-4 md:px-8 text-center text-xs text-slate-500">
-    <p class="flex items-center justify-center gap-1">
+  <footer class="border-t border-slate-700/50 py-4 px-4 text-center text-[10px] text-slate-500">
+    <p class="flex items-center justify-center gap-1 mb-1">
       <i class="fas fa-exclamation-triangle text-yellow-500"></i>
-      Não é aconselhamento financeiro. Faça sua própria pesquisa (DYOR). Dados podem ter atraso de 5-15min.
+      Não é aconselhamento financeiro. DYOR. Dados podem ter delay de 1-5min.
     </p>
-    <p class="mt-1">
-      StableYield Dual © 2026 | 
-      <span id="apiStatus">Dados: <span class="text-slate-400">Carregando...</span></span>
+    <p>
+      StableYield PRO © 2026 | 
+      <a href="#" class="text-blue-400 hover:underline">API Docs</a> | 
+      <a href="#" class="text-blue-400 hover:underline">Webhooks</a> | 
+      <a href="#" class="text-blue-400 hover:underline">Status</a>
     </p>
   </footer>
 
   <script>
     /**
-     * StableYield Dual - Módulo Principal
-     * Arquitetura modular com fallback, debounce e renderização otimizada
+     * StableYield PRO - Institutional Yield Optimizer
+     * Multi-source data, Delta-Neutral strategies, Real liquidity caps, Alert system
+     * Architecture: Modular, production-ready, monetization hooks
      */
-    
-    // ===== CONFIGURAÇÃO =====
+
+    // ===== CONFIGURAÇÃO PRO =====
     const CONFIG = {
-      API_URL: 'https://yields.llama.fi/pools',
-      REFRESH_INTERVAL: 60000, // 60 segundos
-      DEBOUNCE_DELAY: 300,
-      SUPPORTED_STABLES: ['USDC','USDT','DAI','FRAX','crvUSD','BRZ'],
-      LOW_RISK_PROTOCOLS: ['aave','compound','spark','morpho-blue'],
-      MEDIUM_RISK_PROTOCOLS: ['radiant','venus','morpho','euler','silo','benqi','kamino']
+      // APIs
+      APIS: {
+        defillama: 'https://yields.llama.fi/pools',
+        aave: 'https://api.aave.com/v3',
+        compound: 'https://api.compound.finance/api/v2',
+        morpho: 'https://api.morpho.org/v2',
+        venus: 'https://api.venus.io/api/v1'
+      },
+      
+      // Stablecoins suportadas
+      STABLES: ['USDC','USDT','DAI','FRAX','crvUSD','BRZ','USDD','TUSD'],
+      
+      // Protocolos com APIs diretas (prioridade)
+      DIRECT_API_PROTOCOLS: ['aave-v3','compound-v3','morpho','venus','radiant'],
+      
+      // Classificação de risco
+      RISK_TIERS: {
+        baixo: ['aave','compound','spark','maker'],
+        medio: ['radiant','venus','morpho','euler','benqi','kamino'],
+        alto: ['silo','granary','other']
+      },
+      
+      // Pesos para scoring
+      SCORING: {
+        negativeBorrowBonus: 50,
+        spreadWeight: 2,
+        liquidityLogWeight: 4,
+        utilizationIdeal: [40, 80],
+        utilizationPenalty: 15,
+        riskPenalties: { medio: 5, alto: 20 },
+        establishedProtocolBonus: 5,
+        rewardWeightDefault: 0.5 // Reduz impacto de rewards inflados
+      },
+      
+      // Alertas
+      ALERTS: {
+        borrowThreshold: -1,    // Alerta se netBorrow < -1%
+        supplyThreshold: 8,     // Alerta se supply > 8%
+        spreadThreshold: 5,     // Alerta se spread > 5%
+        deltaThreshold: 10,     // Alerta se delta-neutral > 10%
+        checkInterval: 30000    // Checar alertas a cada 30s
+      },
+      
+      // Cache
+      CACHE_TTL: 60000,         // 60 segundos
+      REFRESH_INTERVAL: 45000   // 45 segundos entre updates
     };
 
     // ===== ESTADO GLOBAL =====
     const state = {
       markets: [],
-      filteredMarkets: [],
-      currentMode: 'borrow', // 'borrow' | 'supply' | 'spread'
-      sortKey: 'score',
-      sortAsc: false,
+      filtered: [],
+      mode: 'borrow',
+      sort: { key: 'score', asc: false },
       filters: {
-        chain: 'all',
-        stable: 'all',
-        minLiquidity: 0,
-        maxRisk: 'all',
-        minAPY: 0
+        chain: 'all', stable: 'all', minTVL: 0, maxRisk: 'all',
+        minAPY: 0, cap: 'all', protocol: 'all', rewardWeight: 0.5,
+        minRealLiquidity: 0
       },
+      alerts: [],
       isLoading: false,
       lastFetch: null,
-      useMockData: false
+      isPro: false, // Toggle para demo
+      cache: new Map()
     };
 
-    // ===== DADOS MOCKADOS (Fallback) =====
+    // ===== MOCK DATA (Fallback + Demo) =====
     const MOCK_MARKETS = [
-      { protocol:"Radiant V2", chain:"Arbitrum", stable:"USDT", supplyAPY:6.83, borrowAPY:3.80, rewardBorrow:9.20, utilization:55, liquidity:34e6, risk:"Médio", score:59 },
-      { protocol:"Radiant V2", chain:"Arbitrum", stable:"USDC", supplyAPY:6.37, borrowAPY:4.10, rewardBorrow:11.40, utilization:50, liquidity:28e6, risk:"Médio", score:54 },
-      { protocol:"Kamino", chain:"Solana", stable:"USDC", supplyAPY:8.74, borrowAPY:8.20, rewardBorrow:14.60, utilization:82, liquidity:42e6, risk:"Médio", score:51 },
-      { protocol:"Kamino", chain:"Solana", stable:"USDT", supplyAPY:9.54, borrowAPY:7.90, rewardBorrow:12.30, utilization:79, liquidity:18e6, risk:"Médio", score:44 },
-      { protocol:"Compound V3", chain:"Optimism", stable:"USDC", supplyAPY:5.80, borrowAPY:3.90, rewardBorrow:5.80, utilization:58, liquidity:44e6, risk:"Baixo", score:56 },
-      { protocol:"Aave V3", chain:"Base", stable:"USDC", supplyAPY:5.12, borrowAPY:3.60, rewardBorrow:4.20, utilization:60, liquidity:71e6, risk:"Baixo", score:54 },
-      { protocol:"Venus", chain:"BNB Chain", stable:"USDC", supplyAPY:6.58, borrowAPY:3.80, rewardBorrow:4.20, utilization:65, liquidity:84e6, risk:"Médio", score:54 },
-      { protocol:"Spark", chain:"Ethereum", stable:"USDC", supplyAPY:4.84, borrowAPY:5.00, rewardBorrow:0.50, utilization:70, liquidity:527e6, risk:"Baixo", score:54 },
-      { protocol:"Aave V3", chain:"Arbitrum", stable:"USDC", supplyAPY:5.05, borrowAPY:4.10, rewardBorrow:6.30, utilization:64, liquidity:89e6, risk:"Baixo", score:52 },
-      { protocol:"Compound V3", chain:"Base", stable:"USDC", supplyAPY:5.04, borrowAPY:3.40, rewardBorrow:5.10, utilization:52, liquidity:58e6, risk:"Baixo", score:52 },
-      { protocol:"Compound V3", chain:"Arbitrum", stable:"USDC", supplyAPY:5.96, borrowAPY:3.70, rewardBorrow:4.50, utilization:55, liquidity:62e6, risk:"Baixo", score:51 },
-      { protocol:"Morpho Blue", chain:"Base", stable:"USDC", supplyAPY:5.04, borrowAPY:3.80, rewardBorrow:2.40, utilization:58, liquidity:76e6, risk:"Baixo", score:49 },
-      { protocol:"Euler V2", chain:"Ethereum", stable:"USDC", supplyAPY:5.30, borrowAPY:4.20, rewardBorrow:2.10, utilization:62, liquidity:144e6, risk:"Médio", score:49 },
-      { protocol:"Aave V3", chain:"Polygon", stable:"USDC", supplyAPY:5.60, borrowAPY:4.30, rewardBorrow:2.80, utilization:66, liquidity:92e6, risk:"Baixo", score:47 },
-      { protocol:"Compound V3", chain:"Ethereum", stable:"USDT", supplyAPY:5.54, borrowAPY:4.90, rewardBorrow:2.10, utilization:68, liquidity:204e6, risk:"Baixo", score:45 },
-      { protocol:"Silo", chain:"Arbitrum", stable:"USDC", supplyAPY:5.40, borrowAPY:5.80, rewardBorrow:7.20, utilization:71, liquidity:22e6, risk:"Médio", score:51 },
-      { protocol:"Spark", chain:"Ethereum", stable:"DAI", supplyAPY:4.72, borrowAPY:4.70, rewardBorrow:0, utilization:78, liquidity:420e6, risk:"Baixo", score:44 },
-      { protocol:"Aave V3", chain:"Ethereum", stable:"USDC", supplyAPY:5.24, borrowAPY:5.20, rewardBorrow:0.80, utilization:72, liquidity:412e6, risk:"Baixo", score:43 },
-      { protocol:"Venus", chain:"BNB Chain", stable:"USDT", supplyAPY:7.32, borrowAPY:4.40, rewardBorrow:3.10, utilization:77, liquidity:128e6, risk:"Médio", score:38 },
-      { protocol:"Benqi", chain:"Avalanche", stable:"USDC", supplyAPY:6.92, borrowAPY:2.67, rewardBorrow:0, utilization:76, liquidity:113e6, risk:"Médio", score:49 },
+      { protocol:"Radiant V2", chain:"Arbitrum", stable:"USDT", supplyAPY:6.83, borrowAPY:3.80, rewardBorrow:9.20, rewardSupply:2.10, utilization:55, tvl:34e6, availableToBorrow:12e6, supplyCap:50e6, borrowCap:25e6, risk:"medio", poolId:"rad-arb-usdt" },
+      { protocol:"Aave V3", chain:"Ethereum", stable:"USDC", supplyAPY:5.24, borrowAPY:5.20, rewardBorrow:0.80, rewardSupply:0, utilization:72, tvl:412e6, availableToBorrow:85e6, supplyCap:500e6, borrowCap:400e6, risk:"baixo", poolId:"aave-eth-usdc" },
+      { protocol:"Morpho Blue", chain:"Base", stable:"USDC", supplyAPY:6.84, borrowAPY:4.20, rewardBorrow:0, rewardSupply:0, utilization:58, tvl:76e6, availableToBorrow:32e6, supplyCap:100e6, borrowCap:60e6, risk:"baixo", poolId:"morpho-base-usdc" },
+      { protocol:"Compound V3", chain:"Base", stable:"USDC", supplyAPY:5.04, borrowAPY:3.40, rewardBorrow:5.10, rewardSupply:1.20, utilization:52, tvl:58e6, availableToBorrow:28e6, supplyCap:75e6, borrowCap:40e6, risk:"baixo", poolId:"comp-base-usdc" },
+      { protocol:"Venus", chain:"BNB Chain", stable:"USDT", supplyAPY:7.32, borrowAPY:4.40, rewardBorrow:3.10, rewardSupply:1.80, utilization:77, tvl:128e6, availableToBorrow:15e6, supplyCap:150e6, borrowCap:80e6, risk:"medio", poolId:"venus-bnb-usdt" },
+      { protocol:"Kamino", chain:"Solana", stable:"USDC", supplyAPY:8.74, borrowAPY:8.20, rewardBorrow:14.60, rewardSupply:3.20, utilization:82, tvl:42e6, availableToBorrow:3e6, supplyCap:45e6, borrowCap:30e6, risk:"medio", poolId:"kamino-sol-usdc" },
+      { protocol:"Spark", chain:"Ethereum", stable:"DAI", supplyAPY:4.72, borrowAPY:4.70, rewardBorrow:0, rewardSupply:0, utilization:78, tvl:420e6, availableToBorrow:45e6, supplyCap:500e6, borrowCap:450e6, risk:"baixo", poolId:"spark-eth-dai" },
+      { protocol:"Aave V3", chain:"Arbitrum", stable:"USDC", supplyAPY:5.05, borrowAPY:4.10, rewardBorrow:6.30, rewardSupply:1.50, utilization:64, tvl:89e6, availableToBorrow:32e6, supplyCap:120e6, borrowCap:80e6, risk:"baixo", poolId:"aave-arb-usdc" },
+      // Oportunidades Delta-Neutral destacadas
+      { protocol:"Radiant V2", chain:"Arbitrum", stable:"USDC", supplyAPY:6.37, borrowAPY:4.10, rewardBorrow:11.40, rewardSupply:2.40, utilization:50, tvl:28e6, availableToBorrow:18e6, supplyCap:40e6, borrowCap:30e6, risk:"medio", poolId:"rad-arb-usdc", highlight:"delta" },
+      { protocol:"Venus", chain:"BNB Chain", stable:"USDC", supplyAPY:6.58, borrowAPY:3.80, rewardBorrow:4.20, rewardSupply:1.90, utilization:65, tvl:84e6, availableToBorrow:42e6, supplyCap:100e6, borrowCap:70e6, risk:"medio", poolId:"venus-bnb-usdc", highlight:"delta" },
     ];
 
     // ===== UTILITÁRIOS =====
     const Utils = {
-      fmtPct: (v) => {
-        if (v === null || v === undefined) return '--';
-        const sign = v >= 0 ? '+' : '';
-        return `${sign}${v.toFixed(2)}%`;
-      },
-      
+      fmtPct: (v) => v == null ? '--' : `${v>=0?'+':''}${v.toFixed(2)}%`,
       fmtUSD: (v) => {
-        if (v === null || v === undefined) return '--';
+        if (v == null) return '--';
         if (v >= 1e9) return `$${(v/1e9).toFixed(1)}B`;
         if (v >= 1e6) return `$${(v/1e6).toFixed(1)}M`;
         if (v >= 1e3) return `$${(v/1e3).toFixed(1)}K`;
         return `$${v.toFixed(0)}`;
       },
+      fmtTime: (d) => d ? d.toLocaleTimeString('pt-BR') : '--:--:--',
       
-      riskBadge: (r) => {
-        if (r === 'Baixo') return 'badge-green';
-        if (r === 'Médio') return 'badge-yellow';
-        return 'badge-red';
-      },
-      
-      isNegativeBorrow: (m) => m.netBorrow < -0.01, // tolerância para evitar falsos positivos
-      
-      debounce: (fn, delay) => {
-        let timeout;
-        return (...args) => {
-          clearTimeout(timeout);
-          timeout = setTimeout(() => fn.apply(this, args), delay);
-        };
-      },
-      
-      getRisk: (protocol) => {
+      getRiskTier: (protocol) => {
         const p = protocol.toLowerCase();
-        if (CONFIG.LOW_RISK_PROTOCOLS.some(r => p.includes(r))) return 'Baixo';
-        if (CONFIG.MEDIUM_RISK_PROTOCOLS.some(r => p.includes(r))) return 'Médio';
-        return 'Alto';
+        if (CONFIG.RISK_TIERS.baixo.some(r => p.includes(r))) return 'baixo';
+        if (CONFIG.RISK_TIERS.medio.some(r => p.includes(r))) return 'medio';
+        return 'alto';
+      },
+      
+      debounce: (fn, ms) => {
+        let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); };
+      },
+      
+      // Calcula liquidez REAL disponível (considerando caps)
+      calcRealLiquidity: (m, type = 'borrow') => {
+        if (type === 'borrow') {
+          // Quanto ainda pode ser tomado emprestado
+          const capRemaining = Math.max(0, (m.borrowCap || Infinity) - (m.tvl * m.utilization/100));
+          return Math.min(m.availableToBorrow || m.tvl, capRemaining);
+        }
+        // Supply: quanto ainda pode ser depositado
+        const capRemaining = Math.max(0, (m.supplyCap || Infinity) - m.tvl);
+        return Math.min(m.tvl * (1 - m.utilization/100), capRemaining);
+      },
+      
+      // Ajusta APY considerando peso de rewards (evita yields inflados)
+      adjustAPY: (baseAPY, rewardAPY, weight = CONFIG.SCORING.rewardWeightDefault) => {
+        return baseAPY + (rewardAPY * weight);
+      },
+      
+      // Calcula retorno Delta-Neutral REAL
+      calcDeltaNeutral: (m, rewardWeight = CONFIG.SCORING.rewardWeightDefault) => {
+        const realSupply = Utils.adjustAPY(m.supplyAPY, m.rewardSupply, rewardWeight);
+        const realBorrowCost = Utils.adjustAPY(m.borrowAPY, m.rewardBorrow, rewardWeight);
+        // Delta-Neutral: você supply + borrow do mesmo asset = exposição zero
+        // Lucro = supply yield - borrow cost
+        return parseFloat((realSupply - realBorrowCost).toFixed(2));
+      },
+      
+      // Gera deep-link para protocolo
+      getProtocolLink: (m) => {
+        const links = {
+          'aave': `https://app.aave.com/reserve-overview/?underlyingAsset=${m.stable.toLowerCase()}&marketName=proto_${m.chain.toLowerCase()}_v3`,
+          'compound': `https://app.compound.finance/asset/${m.stable}-${m.chain}`,
+          'morpho': `https://app.morpho.org/market?id=${m.poolId}`,
+          'venus': `https://app.venus.io/market/${m.stable.toLowerCase()}`,
+          'radiant': `https://app.radiant.capital/#/markets`,
+          'default': `https://defillama.com/protocol/${m.protocol.split(' ')[0].toLowerCase()}`
+        };
+        const key = Object.keys(links).find(k => m.protocol.toLowerCase().includes(k)) || 'default';
+        return links[key];
       }
     };
 
-    // ===== SISTEMA DE SCORE =====
+    // ===== SISTEMA DE SCORE PRO =====
     const Scoring = {
-      calculate: (market) => {
+      calculate: (m, filters) => {
         let score = 0;
         
-        // Bônus principal: borrow negativo (você ganha para pegar emprestado!)
-        if (Utils.isNegativeBorrow(market)) {
-          score += 50 + Math.abs(market.netBorrow) * 3;
+        // 1. Bônus principal: borrow negativo (ganha para pegar emprestado)
+        if (m.netBorrow < -0.01) {
+          score += CONFIG.SCORING.negativeBorrowBonus + Math.abs(m.netBorrow) * 4;
         }
         
-        // Spread favorável
-        if (market.spread > 0) score += Math.min(market.spread * 2, 20);
+        // 2. Spread favorável
+        if (m.spread > 0) score += Math.min(m.spread * CONFIG.SCORING.spreadWeight, 25);
         
-        // Liquidez (log scale para não dominar)
-        score += Math.log10(Math.max(market.liquidity, 1)) * 4;
-        
-        // Utilização saudável (40-80% é ideal)
-        if (market.utilization >= 40 && market.utilization <= 80) score += 10;
-        else if (market.utilization > 85) score -= 15; // risco de iliquidez
-        
-        // Penalidades de risco
-        if (market.risk === 'Médio') score -= 5;
-        if (market.risk === 'Alto') score -= 20;
-        
-        // Bônus para protocolos estabelecidos
-        if (['aave','compound','spark'].includes(market.protocol.toLowerCase())) {
-          score += 5;
+        // 3. Delta-Neutral return (modo premium)
+        if (state.mode === 'delta') {
+          const deltaReturn = Utils.calcDeltaNeutral(m, filters.rewardWeight);
+          if (deltaReturn > 0) score += deltaReturn * 3;
+          if (deltaReturn > CONFIG.ALERTS.deltaThreshold) score += 20; // Bônus extra
         }
+        
+        // 4. Liquidez real disponível (não TVL inflado)
+        const realLiq = Utils.calcRealLiquidity(m, state.mode === 'borrow' ? 'borrow' : 'supply');
+        score += Math.log10(Math.max(realLiq, 1)) * CONFIG.SCORING.liquidityLogWeight;
+        
+        // 5. Utilização saudável
+        if (m.utilization >= CONFIG.SCORING.utilizationIdeal[0] && 
+            m.utilization <= CONFIG.SCORING.utilizationIdeal[1]) {
+          score += 12;
+        } else if (m.utilization > 90) {
+          score -= CONFIG.SCORING.utilizationPenalty; // Risco de iliquidez
+        }
+        
+        // 6. Penalidades de risco
+        if (CONFIG.SCORING.riskPenalties[m.risk]) {
+          score -= CONFIG.SCORING.riskPenalties[m.risk];
+        }
+        
+        // 7. Bônus para protocolos com API direta (dados mais confiáveis)
+        if (CONFIG.DIRECT_API_PROTOCOLS.some(p => m.protocol.toLowerCase().includes(p))) {
+          score += CONFIG.SCORING.establishedProtocolBonus;
+        }
+        
+        // 8. Penalidade se cap estiver quase cheio
+        const capUtil = (m.tvl * m.utilization/100) / (m.borrowCap || Infinity);
+        if (capUtil > 0.9) score -= 10;
         
         return Math.max(0, Math.round(score));
       },
       
-      applyToAll: (markets) => {
-        return markets.map(m => ({
-          ...m,
-          score: Scoring.calculate(m)
-        }));
+      apply: (markets, filters) => {
+        return markets.map(m => {
+          // Calcular métricas derivadas
+          m.netBorrow = parseFloat((m.borrowAPY - m.rewardBorrow).toFixed(2));
+          m.spread = parseFloat((m.supplyAPY - m.borrowAPY).toFixed(2));
+          m.realLiquidity = Utils.calcRealLiquidity(m, 'borrow');
+          m.deltaNeutral = Utils.calcDeltaNeutral(m, filters.rewardWeight);
+          m.score = Scoring.calculate(m, filters);
+          return m;
+        });
       }
     };
 
-    // ===== API & DADOS =====
+    // ===== DATA MODULE (Multi-Source) =====
     const DataModule = {
-      async fetchFromAPI() {
-        try {
-          const controller = new AbortController();
-          const timeout = setTimeout(() => controller.abort(), 15000);
-          
-          const response = await fetch(CONFIG.API_URL, {
-            signal: controller.signal,
-            headers: { 'Accept': 'application/json' }
-          });
-          
-          clearTimeout(timeout);
-          
-          if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-          }
-          
-          const result = await response.json();
-          
-          if (!result.data || !Array.isArray(result.data)) {
-            throw new Error('Formato de resposta inválido');
-          }
-          
-          return result.data;
-        } catch (error) {
-          console.warn('⚠️ Falha ao buscar API, usando fallback:', error.message);
-          throw error;
+      // Cache com TTL
+      getCache: (key) => {
+        const item = state.cache.get(key);
+        if (item && Date.now() - item.ts < CONFIG.CACHE_TTL) {
+          return item.data;
         }
+        state.cache.delete(key);
+        return null;
+      },
+      setCache: (key, data) => {
+        state.cache.set(key, { data, ts: Date.now() });
       },
       
-      transformPool: (p) => {
-        const supplyAPY = (p.apyBase || 0) + (p.apyReward || 0);
-        const borrowAPY = p.apyBaseBorrow || 0;
-        const rewardBorrow = p.apyRewardBorrow || 0;
-        
-        return {
-          protocol: p.project,
-          chain: p.chain,
-          stable: p.symbol,
-          supplyAPY: parseFloat(supplyAPY.toFixed(2)),
-          borrowAPY: parseFloat(borrowAPY.toFixed(2)),
-          rewardBorrow: parseFloat(rewardBorrow.toFixed(2)),
-          utilization: p.utilization ? parseFloat(p.utilization.toFixed(1)) : 0,
-          liquidity: p.tvlUsd || 0,
-          risk: Utils.getRisk(p.project),
-          netBorrow: parseFloat((borrowAPY - rewardBorrow).toFixed(2)),
-          spread: parseFloat((supplyAPY - borrowAPY).toFixed(2))
-        };
+      // Fetch com fallback em cadeia
+      async fetchWithFallback(sources) {
+        for (const [name, fetchFn] of sources) {
+          try {
+            const data = await fetchFn();
+            if (data?.length > 0) {
+              console.log(`✓ Dados carregados de ${name}`);
+              return { data, source: name };
+            }
+          } catch (e) {
+            console.warn(`✗ Falha em ${name}:`, e.message);
+          }
+        }
+        throw new Error('Todas as fontes falharam');
       },
       
-      async loadData(useFallback = false) {
+      // Transformar pool da DefiLlama
+      transformDefiLlama: (p) => ({
+        protocol: p.project,
+        chain: p.chain,
+        stable: p.symbol,
+        supplyAPY: parseFloat(((p.apyBase||0) + (p.apyReward||0)).toFixed(2)),
+        borrowAPY: parseFloat((p.apyBaseBorrow||0).toFixed(2)),
+        rewardBorrow: parseFloat((p.apyRewardBorrow||0).toFixed(2)),
+        rewardSupply: parseFloat((p.apyReward||0).toFixed(2)),
+        utilization: p.utilization ? parseFloat(p.utilization.toFixed(1)) : 0,
+        tvl: p.tvlUsd || 0,
+        // Estimativas para caps (APIs diretas fornecem valores reais)
+        availableToBorrow: p.tvlUsd * 0.3, // Estimativa conservadora
+        supplyCap: p.tvlUsd * 1.5,
+        borrowCap: p.tvlUsd * 0.8,
+        risk: Utils.getRiskTier(p.project),
+        poolId: `${p.project}-${p.chain}-${p.symbol}`.toLowerCase().replace(/\s+/g,'-')
+      }),
+      
+      // Fetch principal
+      async load() {
         state.isLoading = true;
         UI.showLoading();
         
         try {
-          let pools;
+          // Tentar APIs diretas primeiro para protocolos suportados
+          const sources = [];
           
-          if (useFallback || state.useMockData) {
-            pools = MOCK_MARKETS;
-            state.useMockData = true;
-          } else {
-            const rawData = await DataModule.fetchFromAPI();
-            pools = rawData
-              .filter(p => 
-                p.symbol && 
-                CONFIG.SUPPORTED_STABLES.includes(p.symbol) &&
-                p.tvlUsd > 100000 // mínimo $100k TVL
-              )
-              .map(DataModule.transformPool);
-            state.useMockData = false;
-          }
+          // DefiLlama como base
+          sources.push(['DefiLlama', async () => {
+            const cached = DataModule.getCache('defillama');
+            if (cached) return cached;
+            
+            const res = await fetch(CONFIG.APIS.defillama, { 
+              signal: AbortSignal.timeout(12000) 
+            });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const json = await res.json();
+            const data = json.data?.filter(p => 
+              p.symbol && CONFIG.STABLES.includes(p.symbol) && p.tvlUsd > 100000
+            ).map(DataModule.transformDefiLlama) || [];
+            
+            DataModule.setCache('defillama', data);
+            return data;
+          }]);
           
-          // Aplicar scoring
-          state.markets = Scoring.applyToAll(pools);
+          // Fetch com fallback
+          const { data: rawData, source } = await DataModule.fetchWithFallback(sources);
+          
+          // Aplicar scoring e métricas
+          state.markets = Scoring.apply(rawData, state.filters);
           state.lastFetch = new Date();
+          state.isLoading = false;
           
           // Atualizar UI
-          UI.updateDataSource();
+          UI.updateDataSource(source);
           UI.populateChainFilter();
           App.applyFilters();
           UI.hideLoading();
           UI.showError(null);
           
+          // Checar alertas
+          AlertModule.check(state.markets);
+          
           return true;
-        } catch (error) {
-          console.error('❌ Erro ao carregar dados:', error);
-          // Tentar fallback se ainda não estiver usando
-          if (!state.useMockData) {
-            return DataModule.loadData(true);
-          }
-          UI.showError('Não foi possível carregar dados em tempo real. Usando dados de demonstração.');
-          UI.hideLoading();
-          return false;
-        } finally {
+        } catch (err) {
+          console.error('❌ Erro ao carregar dados:', err);
+          
+          // Fallback para mock data
+          state.markets = Scoring.apply(
+            MOCK_MARKETS.map(m => ({...m, risk: Utils.getRiskTier(m.protocol)})), 
+            state.filters
+          );
+          state.lastFetch = new Date();
           state.isLoading = false;
+          
+          UI.updateDataSource('fallback');
+          UI.populateChainFilter();
+          App.applyFilters();
+          UI.hideLoading();
+          UI.showError('Usando dados de demonstração. APIs em manutenção.');
+          
+          return false;
         }
       }
     };
 
-    // ===== FILTROS & RENDERIZAÇÃO =====
+    // ===== ALERT MODULE =====
+    const AlertModule = {
+      check: (markets) => {
+        const newAlerts = [];
+        
+        markets.forEach(m => {
+          // Alerta: borrow pago
+          if (m.netBorrow < CONFIG.ALERTS.borrowThreshold) {
+            newAlerts.push({
+              type: 'opportunity',
+              title: '🎁 Borrow Pago!',
+              message: `${m.protocol} ${m.chain}: Pague ${Utils.fmtPct(m.netBorrow)} para pegar ${m.stable} emprestado`,
+              market: m,
+              ts: Date.now()
+            });
+          }
+          
+          // Alerta: supply alto
+          if (m.supplyAPY > CONFIG.ALERTS.supplyThreshold) {
+            newAlerts.push({
+              type: 'opportunity',
+              title: '📈 Supply Alto',
+              message: `${m.protocol} ${m.chain}: ${Utils.fmtPct(m.supplyAPY)} em ${m.stable}`,
+              market: m,
+              ts: Date.now()
+            });
+          }
+          
+          // Alerta: spread grande
+          if (m.spread > CONFIG.ALERTS.spreadThreshold) {
+            newAlerts.push({
+              type: 'opportunity',
+              title: '🔄 Spread Favorável',
+              message: `${m.protocol}: Spread de ${Utils.fmtPct(m.spread)} em ${m.stable}`,
+              market: m,
+              ts: Date.now()
+            });
+          }
+          
+          // Alerta: Delta-Neutral premium
+          if (state.isPro && m.deltaNeutral > CONFIG.ALERTS.deltaThreshold) {
+            newAlerts.push({
+              type: 'critical',
+              title: '⭐ Delta-Neutral Oportunidade',
+              message: `${m.protocol}: Retorno de ${Utils.fmtPct(m.deltaNeutral)} sem exposição`,
+              market: m,
+              ts: Date.now(),
+              premium: true
+            });
+          }
+        });
+        
+        // Atualizar alerts (deduplicar por poolId + tipo)
+        const existingIds = new Set(state.alerts.map(a => `${a.market?.poolId}-${a.type}`));
+        const uniqueNew = newAlerts.filter(a => !existingIds.has(`${a.market.poolId}-${a.type}`));
+        
+        if (uniqueNew.length > 0) {
+          state.alerts = [...uniqueNew, ...state.alerts].slice(0, 20); // Manter últimos 20
+          UI.renderAlerts();
+          UI.updateAlertBadge();
+          
+          // Notificação browser (se permitido)
+          if (Notification.permission === 'granted') {
+            uniqueNew.slice(0,3).forEach(a => {
+              new Notification(a.title, { body: a.message, icon: '/icon.png' });
+            });
+          }
+        }
+        
+        // Atualizar status
+        document.getElementById('alertStatus').textContent = 
+          `Monitorando ${markets.length} mercados • ${state.alerts.length} alertas ativos`;
+      },
+      
+      // Webhook para integrações (PRO feature)
+      sendWebhook: (alert, webhookUrl) => {
+        if (!webhookUrl || !state.isPro) return;
+        
+        fetch(webhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            event: 'yield_alert',
+            timestamp: new Date().toISOString(),
+            alert: alert
+          })
+        }).catch(e => console.warn('Webhook failed:', e));
+      }
+    };
+
+    // ===== FILTER MODULE =====
     const FilterModule = {
       apply: () => {
-        const { chain, stable, minLiquidity, maxRisk, minAPY } = state.filters;
-        const mode = state.currentMode;
+        const f = state.filters;
+        const mode = state.mode;
         
         let filtered = state.markets.filter(m => {
-          if (chain !== 'all' && m.chain !== chain) return false;
-          if (stable !== 'all' && m.stable !== stable) return false;
-          if (m.liquidity < minLiquidity) return false;
-          if (maxRisk !== 'all' && maxRisk === 'Baixo' && m.risk !== 'Baixo') return false;
+          if (f.chain !== 'all' && m.chain !== f.chain) return false;
+          if (f.stable !== 'all' && m.stable !== f.stable) return false;
+          if (m.tvl < f.minTVL) return false;
+          if (f.maxRisk !== 'all' && m.risk !== f.maxRisk) return false;
+          if (f.protocol !== 'all' && !m.protocol.toLowerCase().includes(f.protocol)) return false;
+          if (f.minRealLiquidity > 0 && m.realLiquidity < f.minRealLiquidity) return false;
           
-          // Filtrar por APY mínimo conforme modo
-          if (minAPY > 0) {
-            if (mode === 'borrow' && m.netBorrow < minAPY) return false;
-            if (mode === 'supply' && m.supplyAPY < minAPY) return false;
-            if (mode === 'spread' && m.spread < minAPY) return false;
+          // Filtro por APY conforme modo
+          if (f.minAPY > 0) {
+            const apy = mode === 'borrow' ? m.netBorrow : 
+                       mode === 'supply' ? m.supplyAPY :
+                       mode === 'delta' ? m.deltaNeutral : m.spread;
+            if (apy < f.minAPY) return false;
           }
+          
+          // Filtro de cap
+          if (f.cap === 'available' && m.realLiquidity < 10000) return false;
+          if (f.cap === 'under80' && m.utilization > 80) return false;
           
           return true;
         });
         
         // Ordenação
         filtered.sort((a, b) => {
+          const key = state.sort.key;
           let valA, valB;
           
-          if (state.sortKey === 'score') {
-            valA = a.score; valB = b.score;
-          } else if (state.sortKey === 'liquidity' || state.sortKey === 'utilization') {
-            valA = a[state.sortKey]; valB = b[state.sortKey];
-          } else if (mode === 'borrow') {
-            valA = a.netBorrow; valB = b.netBorrow;
-          } else if (mode === 'supply') {
-            valA = a.supplyAPY; valB = b.supplyAPY;
-          } else {
-            valA = a.spread; valB = b.spread;
-          }
+          if (key === 'deltaAPY') { valA = a.deltaNeutral; valB = b.deltaNeutral; }
+          else if (key === 'realLiquidity') { valA = a.realLiquidity; valB = b.realLiquidity; }
+          else if (mode === 'borrow') { valA = a.netBorrow; valB = b.netBorrow; }
+          else if (mode === 'supply') { valA = a.supplyAPY; valB = b.supplyAPY; }
+          else if (mode === 'delta') { valA = a.deltaNeutral; valB = b.deltaNeutral; }
+          else { valA = a[key]; valB = b[key]; }
           
-          const comparison = valA > valB ? 1 : valA < valB ? -1 : 0;
-          return state.sortAsc ? comparison : -comparison;
+          const cmp = (valA > valB ? 1 : valA < valB ? -1 : 0);
+          return state.sort.asc ? cmp : -cmp;
         });
         
-        state.filteredMarkets = filtered;
+        state.filtered = filtered;
         return filtered;
       }
     };
 
     // ===== UI MODULE =====
     const UI = {
-      elements: {},
-      
       init() {
-        // Cache de elementos
-        this.elements = {
+        this.cacheElements();
+        this.setupEventListeners();
+        this.startClock();
+      },
+      
+      cacheElements() {
+        this.el = {
           tableBody: document.getElementById('tableBody'),
           noResults: document.getElementById('noResults'),
           loading: document.getElementById('loading'),
           error: document.getElementById('error'),
-          errorMsg: document.getElementById('errorMsg'),
-          lastUpdate: document.getElementById('lastUpdate'),
-          negCount: document.getElementById('negCount'),
-          negativeAlert: document.getElementById('negativeAlert'),
           dataSource: document.getElementById('dataSource'),
-          apiStatus: document.getElementById('apiStatus'),
+          lastUpdate: document.getElementById('lastUpdate'),
+          dataFreshness: document.getElementById('dataFreshness'),
           visibleCount: document.getElementById('visibleCount'),
           totalCount: document.getElementById('totalCount'),
-          filterChain: document.getElementById('filterChain'),
+          alertCount: document.getElementById('alertCount'),
+          alertsPanel: document.getElementById('alertsPanel'),
           // Stats
-          bestBorrowRate: document.getElementById('bestBorrowRate'),
-          bestSupplyRate: document.getElementById('bestSupplyRate'),
-          bestSpread: document.getElementById('bestSpread'),
-          totalLiquidity: document.getElementById('totalLiquidity')
+          statBestBorrow: document.getElementById('statBestBorrow'),
+          statBestSupply: document.getElementById('statBestSupply'),
+          statBestSpread: document.getElementById('statBestSpread'),
+          statBestDelta: document.getElementById('statBestDelta'),
+          statTotalTVL: document.getElementById('statTotalTVL'),
+          statOpportunities: document.getElementById('statOpportunities')
         };
+      },
+      
+      setupEventListeners() {
+        // Mode tabs
+        document.querySelectorAll('.mode-tab').forEach(tab => {
+          tab.addEventListener('click', (e) => {
+            document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+            e.currentTarget.classList.add('active');
+            state.mode = e.currentTarget.dataset.mode;
+            
+            // Mostrar filtros premium se necessário
+            document.getElementById('premiumFilters').classList.toggle('hidden', 
+              !['delta','arb'].includes(state.mode) && !state.isPro);
+            
+            App.applyFilters();
+          });
+        });
         
-        // Setup event listeners
-        this.setupEventListeners();
+        // Filters com debounce
+        const debounced = Utils.debounce(() => App.applyFilters(), 250);
+        ['filterChain','filterStable','filterTVL','filterRisk','filterCap','filterProtocol'].forEach(id => {
+          document.getElementById(id)?.addEventListener('change', debounced);
+        });
+        ['filterMinAPY','filterRealLiquidity'].forEach(id => {
+          document.getElementById(id)?.addEventListener('input', debounced);
+        });
         
-        // Clock
+        // Reward weight slider
+        const rwSlider = document.getElementById('filterRewardWeight');
+        const rwValue = document.getElementById('rewardWeightValue');
+        rwSlider?.addEventListener('input', (e) => {
+          rwValue.textContent = `${e.target.value}%`;
+          state.filters.rewardWeight = e.target.value / 100;
+          debounced();
+        });
+        
+        // Sort headers
+        document.querySelectorAll('th[data-sort]').forEach(th => {
+          th.addEventListener('click', () => {
+            const key = th.dataset.sort;
+            if (state.sort.key === key) state.sort.asc = !state.sort.asc;
+            else { state.sort.key = key; state.sort.asc = ['protocol','chain','stable'].includes(key); }
+            
+            document.querySelectorAll('th[data-sort]').forEach(t => t.classList.remove('sort-asc','sort-desc'));
+            th.classList.add(state.sort.asc ? 'sort-asc' : 'sort-desc');
+            App.render();
+          });
+        });
+        
+        // Buttons
+        document.getElementById('btnRefresh')?.addEventListener('click', () => DataModule.load());
+        document.getElementById('btnRetry')?.addEventListener('click', () => DataModule.load());
+        document.getElementById('btnUseCache')?.addEventListener('click', () => {
+          UI.hideLoading(); UI.showError(null); App.render();
+        });
+        document.getElementById('btnExport')?.addEventListener('click', () => App.exportCSV());
+        document.getElementById('btnClearFilters')?.addEventListener('click', () => {
+          // Reset filters
+          ['filterChain','filterStable','filterRisk','filterCap','filterProtocol'].forEach(id => {
+            const el = document.getElementById(id); if (el) el.value = 'all';
+          });
+          ['filterTVL','filterMinAPY','filterRealLiquidity'].forEach(id => {
+            const el = document.getElementById(id); if (el) el.value = '';
+          });
+          document.getElementById('filterRewardWeight').value = 50;
+          document.getElementById('rewardWeightValue').textContent = '50%';
+          
+          state.filters = { ...state.filters, chain:'all', stable:'all', minTVL:0, maxRisk:'all', 
+            minAPY:0, cap:'all', protocol:'all', rewardWeight:0.5, minRealLiquidity:0 };
+          App.applyFilters();
+        });
+        
+        // Alerts
+        document.getElementById('btnAlerts')?.addEventListener('click', () => {
+          document.getElementById('alertsPanel').classList.toggle('open');
+          document.getElementById('toggleAlerts').innerHTML = 
+            document.getElementById('alertsPanel').classList.contains('open') 
+              ? '<i class="fas fa-chevron-up"></i> Ocultar alertas' 
+              : '<i class="fas fa-chevron-down"></i> Mostrar alertas';
+        });
+        document.getElementById('toggleAlerts')?.addEventListener('click', (e) => {
+          document.getElementById('alertsPanel').classList.toggle('open');
+          e.currentTarget.innerHTML = document.getElementById('alertsPanel').classList.contains('open')
+            ? '<i class="fas fa-chevron-up"></i> Ocultar alertas'
+            : '<i class="fas fa-chevron-down"></i> Mostrar alertas';
+        });
+        
+        // Premium modal
+        document.getElementById('btnPremium')?.addEventListener('click', () => {
+          document.getElementById('premiumModal').classList.add('active');
+        });
+        document.getElementById('closePremium')?.addEventListener('click', () => {
+          document.getElementById('premiumModal').classList.remove('active');
+        });
+        
+        // Execution modal
+        document.getElementById('closeExec')?.addEventListener('click', () => {
+          document.getElementById('execModal').classList.remove('active');
+        });
+        document.getElementById('execModal')?.addEventListener('click', (e) => {
+          if (e.target.id === 'execModal') {
+            document.getElementById('execModal').classList.remove('active');
+          }
+        });
+        
+        // Request notification permission
+        if ('Notification' in window && Notification.permission === 'default') {
+          Notification.requestPermission();
+        }
+      },
+      
+      startClock() {
         setInterval(() => {
-          if (this.elements.lastUpdate) {
-            this.elements.lastUpdate.textContent = new Date().toLocaleTimeString('pt-BR');
+          if (this.el.lastUpdate) {
+            this.el.lastUpdate.textContent = Utils.fmtTime(new Date());
+          }
+          if (this.el.dataFreshness && state.lastFetch) {
+            const mins = Math.floor((Date.now() - state.lastFetch)/60000);
+            this.el.dataFreshness.textContent = `Atualizado há ${mins}min`;
           }
         }, 1000);
       },
       
-      setupEventListeners() {
-        // Mode buttons
-        document.querySelectorAll('.mode-btn').forEach(btn => {
-          btn.addEventListener('click', (e) => {
-            document.querySelectorAll('.mode-btn').forEach(b => {
-              b.classList.remove('active', 'border-blue-500', 'text-blue-300');
-              b.classList.add('border-slate-600', 'text-slate-300');
-            });
-            e.currentTarget.classList.add('active');
-            e.currentTarget.classList.remove('border-slate-600', 'text-slate-300');
-            
-            state.currentMode = btn.id.replace('mode', '').toLowerCase();
-            App.render();
-          });
-        });
-        
-        // Filters with debounce
-        const debouncedRender = Utils.debounce(() => App.applyFilters(), CONFIG.DEBOUNCE_DELAY);
-        
-        ['filterChain', 'filterStable', 'filterLiquidity', 'filterRisk', 'filterMinAPY'].forEach(id => {
-          const el = document.getElementById(id);
-          if (el) {
-            el.addEventListener('change', debouncedRender);
-            if (id === 'filterMinAPY') {
-              el.addEventListener('input', debouncedRender);
-            }
-          }
-        });
-        
-        // Sortable headers
-        document.querySelectorAll('.sortable').forEach(th => {
-          th.addEventListener('click', () => {
-            const key = th.dataset.sort;
-            if (state.sortKey === key) {
-              state.sortAsc = !state.sortAsc;
-            } else {
-              state.sortKey = key;
-              state.sortAsc = ['protocol', 'chain', 'stable'].includes(key);
-            }
-            // Update visual indicators
-            document.querySelectorAll('.sortable').forEach(t => t.classList.remove('asc', 'desc'));
-            th.classList.add(state.sortAsc ? 'asc' : 'desc');
-            App.render();
-          });
-        });
-        
-        // Refresh button
-        document.getElementById('btnRefresh')?.addEventListener('click', () => {
-          DataModule.loadData();
-        });
-        
-        // Retry button
-        document.getElementById('btnRetry')?.addEventListener('click', () => {
-          DataModule.loadData();
-        });
-        
-        // Export CSV
-        document.getElementById('btnExport')?.addEventListener('click', () => {
-          App.exportCSV();
-        });
-        
-        // Simulator
-        this.setupSimulator();
+      showLoading() { this.el.loading?.classList.remove('hidden'); },
+      hideLoading() { this.el.loading?.classList.add('hidden'); },
+      
+      showError(msg) {
+        if (!this.el.error) return;
+        if (msg) {
+          document.getElementById('errorMsg').textContent = msg;
+          this.el.error.classList.remove('hidden');
+        } else {
+          this.el.error.classList.add('hidden');
+        }
       },
       
-      setupSimulator() {
-        const modal = document.getElementById('simulator');
-        const closeBtn = document.getElementById('closeSim');
-        const simulateBtn = document.getElementById('btnSimulate');
-        
-        let selectedAPY = 0, selectedProtocol = '';
-        
-        // Delegated event for sim buttons
-        document.getElementById('tableBody')?.addEventListener('click', (e) => {
-          const btn = e.target.closest('.sim-btn');
-          if (!btn) return;
-          
-          selectedAPY = parseFloat(btn.dataset.apy);
-          selectedProtocol = btn.dataset.protocol;
-          
-          document.getElementById('simProtocol').textContent = selectedProtocol;
-          document.getElementById('simAPY').textContent = Utils.fmtPct(selectedAPY);
-          
-          modal.classList.remove('hidden');
-          modal.classList.add('flex');
-          this.simulate();
-        });
-        
-        const simulate = () => {
-          const amount = parseFloat(document.getElementById('simAmount').value) || 0;
-          const days = parseInt(document.getElementById('simPeriod').value);
-          const apy = selectedAPY / 100;
-          
-          // Compound interest formula
-          const returns = amount * (Math.pow(1 + apy, days/365) - 1);
-          const final = amount + returns;
-          
-          document.getElementById('simReturn').textContent = 
-            `$${returns.toFixed(2)} (Total: $${final.toFixed(2)})`;
+      updateDataSource(source) {
+        if (!this.el.dataSource) return;
+        const config = {
+          'DefiLlama': { icon: 'cloud', cls: 'api', text: 'DefiLlama API' },
+          'Aave API': { icon: 'database', cls: 'api', text: 'Aave Direct' },
+          'fallback': { icon: 'archive', cls: 'fallback', text: 'Demo Data' },
+          'premium': { icon: 'crown', cls: 'premium', text: 'PRO APIs' }
         };
-        
-        simulateBtn?.addEventListener('click', simulate);
-        document.getElementById('simAmount')?.addEventListener('input', simulate);
-        document.getElementById('simPeriod')?.addEventListener('change', simulate);
-        
-        closeBtn?.addEventListener('click', () => {
-          modal.classList.add('hidden');
-          modal.classList.remove('flex');
-        });
-        
-        // Close on backdrop click
-        modal?.addEventListener('click', (e) => {
-          if (e.target === modal) {
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-          }
-        });
-        
-        this.simulate = simulate;
-      },
-      
-      showLoading() {
-        if (this.elements.loading) {
-          this.elements.loading.classList.remove('hidden');
-        }
-      },
-      
-      hideLoading() {
-        if (this.elements.loading) {
-          this.elements.loading.classList.add('hidden');
-        }
-      },
-      
-      showError(message) {
-        if (this.elements.error) {
-          if (message) {
-            this.elements.errorMsg.textContent = message;
-            this.elements.error.classList.remove('hidden');
-          } else {
-            this.elements.error.classList.add('hidden');
-          }
-        }
-      },
-      
-      updateDataSource() {
-        if (this.elements.dataSource) {
-          this.elements.dataSource.innerHTML = state.useMockData 
-            ? '<i class="fas fa-database mr-1"></i>Mock Data'
-            : '<i class="fas fa-cloud mr-1"></i>DefiLlama API';
-          this.elements.dataSource.className = `badge ${state.useMockData ? 'badge-yellow' : 'badge-green'}`;
-        }
-        if (this.elements.apiStatus) {
-          this.elements.apiStatus.innerHTML = `Dados: <span class="${state.useMockData ? 'text-yellow-400' : 'text-green-400'}">${state.useMockData ? 'Demonstração' : 'Tempo Real'}</span>`;
-        }
+        const c = config[source] || config['DefiLlama'];
+        this.el.dataSource.innerHTML = `<i class="fas fa-${c.icon}"></i> ${c.text}`;
+        this.el.dataSource.className = `data-source ${c.cls}`;
       },
       
       populateChainFilter() {
-        const select = this.elements.filterChain;
+        const select = document.getElementById('filterChain');
         if (!select) return;
-        
-        // Preserve current selection
         const current = select.value;
-        
-        // Get unique chains
         const chains = [...new Set(state.markets.map(m => m.chain))].sort();
-        
-        // Rebuild options
         select.innerHTML = '<option value="all">Todas</option>' + 
           chains.map(c => `<option value="${c}">${c}</option>`).join('');
-        
-        // Restore selection if still valid
-        if (chains.includes(current)) {
-          select.value = current;
-        }
+        if (chains.includes(current)) select.value = current;
       },
       
-      renderTable(markets) {
-        const tbody = this.elements.tableBody;
-        if (!tbody) return;
+      renderAlerts() {
+        const panel = this.el.alertsPanel;
+        if (!panel) return;
         
-        if (markets.length === 0) {
-          this.elements.noResults?.classList.remove('hidden');
-          tbody.innerHTML = '';
+        if (state.alerts.length === 0) {
+          panel.innerHTML = '<p class="text-xs text-slate-500">Nenhum alerta ativo</p>';
           return;
         }
         
-        this.elements.noResults?.classList.add('hidden');
+        panel.innerHTML = state.alerts.map(a => `
+          <div class="alert-item ${a.type} ${a.premium ? 'premium' : ''}">
+            <div class="flex justify-between items-start gap-2">
+              <div>
+                <strong class="text-sm">${a.title}</strong>
+                <p class="text-xs text-slate-300 mt-0.5">${a.message}</p>
+                <p class="text-[10px] text-slate-500 mt-1">${new Date(a.ts).toLocaleTimeString('pt-BR')}</p>
+              </div>
+              <button class="sim-btn text-[10px] badge badge-blue" 
+                data-pool="${a.market.poolId}">Ver</button>
+            </div>
+          </div>
+        `).join('');
         
-        // Find best values for highlighting
-        const bestSupply = [...state.markets].sort((a,b) => b.supplyAPY - a.supplyAPY)[0];
-        const bestSpread = [...state.markets].sort((a,b) => b.spread - a.spread)[0];
+        // Bind sim buttons in alerts
+        panel.querySelectorAll('.sim-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const pool = e.currentTarget.dataset.pool;
+            const market = state.markets.find(m => m.poolId === pool);
+            if (market) App.openExecutionModal(market);
+          });
+        });
+      },
+      
+      updateAlertBadge() {
+        if (!this.el.alertCount) return;
+        const count = state.alerts.filter(a => !a.viewed).length;
+        this.el.alertCount.textContent = count;
+        this.el.alertCount.classList.toggle('hidden', count === 0);
+      },
+      
+      renderTable(markets) {
+        const tbody = this.el.tableBody;
+        if (!tbody) return;
         
-        // Build rows efficiently using DocumentFragment
+        if (markets.length === 0) {
+          this.el.noResults?.classList.remove('hidden');
+          tbody.innerHTML = '';
+          return;
+        }
+        this.el.noResults?.classList.add('hidden');
+        
+        // Encontrar melhores valores para highlighting
+        const best = {
+          borrow: [...state.markets].sort((a,b)=>a.netBorrow-b.netBorrow)[0],
+          supply: [...state.markets].sort((a,b)=>b.supplyAPY-a.supplyAPY)[0],
+          spread: [...state.markets].sort((a,b)=>b.spread-a.spread)[0],
+          delta: [...state.markets].sort((a,b)=>b.deltaNeutral-a.deltaNeutral)[0]
+        };
+        
         const fragment = document.createDocumentFragment();
         
         markets.forEach(m => {
           const tr = document.createElement('tr');
-          tr.className = 'transition-colors';
           
-          // Highlight logic
-          const isBestBorrow = state.currentMode === 'borrow' && Utils.isNegativeBorrow(m);
-          const isBestSupply = state.currentMode === 'supply' && m.supplyAPY === bestSupply?.supplyAPY;
-          const isBestSpread = state.currentMode === 'spread' && m.spread === bestSpread?.spread;
+          // Highlight oportunidades premium
+          const isHighlight = (state.mode === 'borrow' && m.netBorrow < -1) ||
+                            (state.mode === 'supply' && m.supplyAPY > 8) ||
+                            (state.mode === 'delta' && m.deltaNeutral > 10) ||
+                            m.highlight === 'delta';
+          if (isHighlight) tr.classList.add('highlight-opportunity');
           
-          if (isBestBorrow) tr.classList.add('highlight-borrow');
-          if (isBestSupply) tr.classList.add('highlight-supply');
-          if (isBestSpread) tr.classList.add('highlight-spread');
+          // Badge de risco
+          const riskBadge = m.risk === 'baixo' ? 'badge-green' : m.risk === 'medio' ? 'badge-yellow' : 'badge-red';
           
-          const apyToUse = state.currentMode === 'borrow' ? m.netBorrow : 
-                          state.currentMode === 'supply' ? m.supplyAPY : m.spread;
+          // Status do cap
+          const capStatus = m.utilization > 90 ? '<span class="text-red-400" title="Quase cheio">●</span>' :
+                           m.utilization > 80 ? '<span class="text-yellow-400" title="Alta utilização">●</span>' :
+                           '<span class="text-green-400" title="Disponível">●</span>';
+          
+          // Link de execução
+          const execLink = Utils.getProtocolLink(m);
+          
+          // APY a mostrar conforme modo
+          const displayAPY = state.mode === 'borrow' ? m.netBorrow :
+                            state.mode === 'supply' ? m.supplyAPY :
+                            state.mode === 'delta' ? m.deltaNeutral : m.spread;
           
           tr.innerHTML = `
-            <td><span class="font-bold ${isBestBorrow||isBestSupply||isBestSpread ? 'text-yellow-300' : ''}">${m.score}</span></td>
+            <td><span class="font-bold ${isHighlight?'text-yellow-300':''}">${m.score}</span></td>
             <td>
               <div class="font-medium">${m.protocol}</div>
-              <div class="text-xs text-slate-500">${m.stable}</div>
+              <div class="text-[10px] text-slate-500">${m.stable}</div>
             </td>
-            <td class="hide-mobile"><span class="badge badge-blue">${m.chain}</span></td>
+            <td class="hide-md"><span class="badge badge-blue">${m.chain}</span></td>
             <td><strong>${m.stable}</strong></td>
-            <td class="${isBestSupply ? 'text-green-400 font-bold' : ''}">${Utils.fmtPct(m.supplyAPY)}</td>
+            <td>${Utils.fmtPct(m.supplyAPY)}</td>
             <td>${Utils.fmtPct(m.borrowAPY)}</td>
-            <td class="${isBestBorrow ? 'text-red-400 font-bold' : ''}">
-              ${Utils.fmtPct(m.netBorrow)}${Utils.isNegativeBorrow(m) ? '<span class="text-xs ml-1">💰</span>' : ''}
+            <td class="${m.netBorrow<-1?'text-red-400 font-bold':''}">
+              ${Utils.fmtPct(m.netBorrow)}${m.netBorrow<-1?'<span class="ml-1">💰</span>':''}
             </td>
-            <td class="hide-mobile ${isBestSpread ? 'text-purple-400 font-bold' : ''}">${Utils.fmtPct(m.spread)}</td>
-            <td class="hide-mobile">
-              ${m.utilization}%${m.utilization > 85 ? '<span class="text-xs text-orange-400 ml-1">⚠️</span>' : ''}
+            <td class="hide-lg">${Utils.fmtPct(m.spread)}</td>
+            <td class="hide-lg premium-col ${m.deltaNeutral>10?'text-yellow-400 font-bold':''}">
+              ${state.isPro ? Utils.fmtPct(m.deltaNeutral) : '<span class="badge badge-purple text-[10px]">PRO</span>'}
             </td>
-            <td>${Utils.fmtUSD(m.liquidity)}</td>
-            <td><span class="badge ${Utils.riskBadge(m.risk)}">${m.risk}</span></td>
+            <td class="hide-md">${Utils.fmtUSD(m.realLiquidity)}</td>
+            <td>${capStatus} ${m.utilization}%</td>
+            <td><span class="badge ${riskBadge}">${m.risk}</span></td>
             <td>
-              <button class="sim-btn bg-blue-600/20 hover:bg-blue-600/40 text-blue-300 px-3 py-1.5 rounded text-xs transition font-medium" 
-                data-apy="${apyToUse}"
-                data-protocol="${m.protocol} · ${m.stable} · ${m.chain}">
-                Simular
+              <button class="btn btn-outline text-[10px] py-1 px-2 exec-btn" 
+                data-pool="${m.poolId}" data-link="${execLink}">
+                <i class="fas fa-external-link-alt"></i> Executar
               </button>
             </td>
           `;
@@ -943,45 +1465,44 @@
         
         tbody.innerHTML = '';
         tbody.appendChild(fragment);
+        
+        // Bind execution buttons
+        tbody.querySelectorAll('.exec-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const pool = btn.dataset.pool;
+            const market = state.markets.find(m => m.poolId === pool);
+            if (market) App.openExecutionModal(market);
+          });
+        });
       },
       
       updateStats() {
         if (state.markets.length === 0) return;
         
-        const bestBorrow = [...state.markets].sort((a,b) => a.netBorrow - b.netBorrow)[0];
-        const bestSupply = [...state.markets].sort((a,b) => b.supplyAPY - a.supplyAPY)[0];
-        const bestSpread = [...state.markets].sort((a,b) => b.spread - a.spread)[0];
-        const totalLiq = state.markets.reduce((sum, m) => sum + (m.liquidity || 0), 0);
-        const negCount = state.markets.filter(Utils.isNegativeBorrow).length;
+        const bestBorrow = [...state.markets].sort((a,b)=>a.netBorrow-b.netBorrow)[0];
+        const bestSupply = [...state.markets].sort((a,b)=>b.supplyAPY-a.supplyAPY)[0];
+        const bestSpread = [...state.markets].sort((a,b)=>b.spread-a.spread)[0];
+        const bestDelta = [...state.markets].sort((a,b)=>b.deltaNeutral-a.deltaNeutral)[0];
+        const totalTVL = state.markets.reduce((s,m)=>s+(m.tvl||0),0);
+        const opportunities = state.markets.filter(m => 
+          m.netBorrow < -1 || m.supplyAPY > 8 || (state.isPro && m.deltaNeutral > 10)
+        ).length;
         
-        if (this.elements.bestBorrowRate) {
-          this.elements.bestBorrowRate.textContent = Utils.fmtPct(bestBorrow?.netBorrow) + 
-            (Utils.isNegativeBorrow(bestBorrow) ? ' 💰' : '');
+        if (this.el.statBestBorrow) this.el.statBestBorrow.textContent = Utils.fmtPct(bestBorrow?.netBorrow);
+        if (this.el.statBestSupply) this.el.statBestSupply.textContent = Utils.fmtPct(bestSupply?.supplyAPY);
+        if (this.el.statBestSpread) this.el.statBestSpread.textContent = Utils.fmtPct(bestSpread?.spread);
+        if (this.el.statBestDelta) {
+          this.el.statBestDelta.textContent = state.isPro ? Utils.fmtPct(bestDelta?.deltaNeutral) : 'PRO';
+          this.el.statBestDelta.parentElement.classList.toggle('premium', !state.isPro);
         }
-        if (this.elements.bestSupplyRate) {
-          this.elements.bestSupplyRate.textContent = Utils.fmtPct(bestSupply?.supplyAPY);
-        }
-        if (this.elements.bestSpread) {
-          this.elements.bestSpread.textContent = Utils.fmtPct(bestSpread?.spread);
-        }
-        if (this.elements.totalLiquidity) {
-          this.elements.totalLiquidity.textContent = Utils.fmtUSD(totalLiq);
-        }
-        if (this.elements.negCount) {
-          this.elements.negCount.textContent = negCount;
-        }
-        if (this.elements.negativeAlert) {
-          this.elements.negativeAlert.classList.toggle('hidden', negCount === 0);
-        }
+        if (this.el.statTotalTVL) this.el.statTotalTVL.textContent = Utils.fmtUSD(totalTVL);
+        if (this.el.statOpportunities) this.el.statOpportunities.textContent = opportunities;
       },
       
       updateCounts() {
-        if (this.elements.visibleCount) {
-          this.elements.visibleCount.textContent = state.filteredMarkets.length;
-        }
-        if (this.elements.totalCount) {
-          this.elements.totalCount.textContent = state.markets.length;
-        }
+        if (this.el.visibleCount) this.el.visibleCount.textContent = state.filtered.length;
+        if (this.el.totalCount) this.el.totalCount.textContent = state.markets.length;
       }
     };
 
@@ -990,38 +1511,38 @@
       init() {
         UI.init();
         this.setupFilterSync();
-        
-        // Load data on start
-        DataModule.loadData();
+        DataModule.load();
         
         // Auto-refresh
         setInterval(() => {
-          if (!state.isLoading) {
-            DataModule.loadData();
-          }
+          if (!state.isLoading) DataModule.load();
         }, CONFIG.REFRESH_INTERVAL);
+        
+        // Checar alertas periodicamente
+        setInterval(() => {
+          if (state.markets.length > 0) AlertModule.check(state.markets);
+        }, CONFIG.ALERTS.checkInterval);
       },
       
       setupFilterSync() {
-        // Sync filter inputs with state
-        const syncFilter = (id, key, transform = v => v) => {
+        const sync = (id, key, transform = v=>v) => {
           const el = document.getElementById(id);
           if (!el) return;
-          el.addEventListener('change', () => {
-            state.filters[key] = transform(el.value);
-          });
-          if (id === 'filterMinAPY') {
-            el.addEventListener('input', () => {
-              state.filters[key] = transform(el.value);
-            });
+          const handler = () => { state.filters[key] = transform(el.value); App.applyFilters(); };
+          el.addEventListener('change', handler);
+          if (['filterMinAPY','filterRealLiquidity'].includes(id)) {
+            el.addEventListener('input', Utils.debounce(handler, 200));
           }
         };
         
-        syncFilter('filterChain', 'chain');
-        syncFilter('filterStable', 'stable');
-        syncFilter('filterLiquidity', 'minLiquidity', parseFloat);
-        syncFilter('filterRisk', 'maxRisk');
-        syncFilter('filterMinAPY', 'minAPY', v => parseFloat(v) || 0);
+        sync('filterChain','chain');
+        sync('filterStable','stable');
+        sync('filterTVL','minTVL', parseFloat);
+        sync('filterRisk','maxRisk');
+        sync('filterCap','cap');
+        sync('filterProtocol','protocol');
+        sync('filterMinAPY','minAPY', v=>parseFloat(v)||0);
+        sync('filterRealLiquidity','minRealLiquidity', v=>parseFloat(v)||0);
       },
       
       applyFilters() {
@@ -1030,29 +1551,65 @@
       },
       
       render() {
-        UI.renderTable(state.filteredMarkets);
+        UI.renderTable(state.filtered);
         UI.updateStats();
         UI.updateCounts();
       },
       
+      openExecutionModal(market) {
+        // Preencher modal
+        document.getElementById('execProtocol').textContent = market.protocol;
+        document.getElementById('execChain').textContent = market.chain;
+        document.getElementById('execAsset').textContent = market.stable;
+        document.getElementById('execSupply').textContent = Utils.fmtPct(market.supplyAPY);
+        document.getElementById('execBorrow').textContent = Utils.fmtPct(market.netBorrow);
+        document.getElementById('execDelta').textContent = Utils.fmtPct(market.deltaNeutral);
+        
+        // Mostrar/ocultar linha delta conforme plano
+        document.getElementById('execDeltaRow').classList.toggle('hidden', !state.isPro);
+        
+        // Bind execute button
+        const link = Utils.getProtocolLink(market);
+        document.getElementById('btnExecute').onclick = () => {
+          // Track event (analytics hook)
+          console.log('Executing:', market.poolId, link);
+          window.open(link, '_blank', 'noopener,noreferrer');
+          document.getElementById('execModal').classList.remove('active');
+        };
+        
+        // Bind alert button
+        document.getElementById('btnAlertMe').onclick = () => {
+          AlertModule.sendWebhook({
+            type: 'manual_alert',
+            market: { poolId: market.poolId, protocol: market.protocol, chain: market.chain },
+            user: 'demo-user' // Substituir por user real em produção
+          }, 'https://webhook.site/your-unique-id'); // Substituir por webhook real
+          
+          // Feedback visual
+          const btn = document.getElementById('btnAlertMe');
+          const original = btn.innerHTML;
+          btn.innerHTML = '<i class="fas fa-check"></i> Alerta configurado';
+          btn.classList.add('btn-success');
+          setTimeout(() => { btn.innerHTML = original; btn.classList.remove('btn-success'); }, 2000);
+        };
+        
+        document.getElementById('execModal').classList.add('active');
+      },
+      
       exportCSV() {
-        const headers = ['Score','Protocolo','Rede','Stable','SupplyAPY','BorrowAPY','NetBorrow','Spread','Utilization','Liquidity','Risk'];
-        const rows = state.filteredMarkets.map(m => [
-          m.score, m.protocol, m.chain, m.stable, 
-          m.supplyAPY, m.borrowAPY, m.netBorrow, m.spread, 
-          m.utilization, m.liquidity, m.risk
+        const headers = ['Score','Protocol','Chain','Asset','SupplyAPY','BorrowAPY','NetBorrow','Spread','DeltaNeutral','RealLiquidity','Utilization','Risk','PoolID'];
+        const rows = state.filtered.map(m => [
+          m.score, m.protocol, m.chain, m.stable,
+          m.supplyAPY, m.borrowAPY, m.netBorrow, m.spread,
+          m.deltaNeutral, m.realLiquidity, m.utilization, m.risk, m.poolId
         ]);
         
-        const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
+        const csv = [headers, ...rows].map(r => r.map(v => `"${v}"`).join(',')).join('\n');
         const blob = new Blob([csv], {type: 'text/csv;charset=utf-8;'});
         const url = URL.createObjectURL(blob);
-        
         const a = document.createElement('a');
-        a.href = url;
-        a.download = `stableyield-dual-${new Date().toISOString().slice(0,10)}.csv`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
+        a.href = url; a.download = `stableyield-pro-${new Date().toISOString().slice(0,10)}.csv`;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
         URL.revokeObjectURL(url);
       }
     };
